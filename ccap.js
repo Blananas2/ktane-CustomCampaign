@@ -2,41 +2,11 @@
 
 let fs = require("fs");
 let camp = [ //contrived example to get the point across; when in actual use, other tools will generate the campaign, it won't be static like in this case
-  [
-    'Colour Flash',
-    'Piano Keys',
-    'Semaphore',
-    'Emoji Math',
-    'Word Scramble'
-  ],
-  [
-    'Two Bits',
-    'Word Scramble',
-    'Combination Lock',
-    'Orientation Cube',
-    'Plumbing'
-  ],
-  [
-    'Colour Flash',
-    'Switches',
-    'Word Scramble',
-    'Combination Lock',
-    'Foreign Exchange Rates'
-  ],
-  [
-    'Word Scramble',
-    'Round Keypad',
-    'Adventure Game',
-    '3D Maze',
-    'Number Pad'
-  ],
-  [
-    'Piano Keys',
-    'Semaphore',
-    'Emoji Math',
-    'Switches',
-    'Word Scramble'
-  ]
+    [ "Colour Flash", "Piano Keys", "Semaphore", "Emoji Math", "Word Scramble" ],
+    [ "Two Bits", "Word Scramble", "Combination Lock", "Orientation Cube", "Plumbing" ],
+    [ "Colour Flash", "Switches", "Word Scramble", "Combination Lock", "Foreign Exchange Rates" ],
+    [ "Word Scramble", "Round Keypad", "Adventure Game", "3D Maze", "Number Pad" ],
+    [ "Piano Keys", "Semaphore", "Emoji Math", "Switches", "Word Scramble" ]
 ];
 
 let items = { 
