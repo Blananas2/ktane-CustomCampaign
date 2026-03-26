@@ -22,7 +22,6 @@ let bombIx = 1;
 
 camp.forEach(bomb => {
     let bombName = "Bomb " + bombIx;
-    let moduleIx = 1;
 
     bomb.forEach(module => {
         let moduleEntry = items.data.find((entry) => entry.name == module);
@@ -43,8 +42,6 @@ camp.forEach(bomb => {
             category: [`${bombName} Checks`],
             requires: `|@${bombName} Mods:all|`
         });
-
-        moduleIx++;
     });
     locations.data.push({
         name: `${bombName} Defused`,
@@ -74,7 +71,7 @@ if (widgetsPerBomb > 0) {
     });
     locations.data.forEach(location => {
         if (location.name == "All Bombs Defused") { 
-            location.requires += ` AND |Widget:${widgetsPerBomb * (bombCount - 1)}|`;
+            location.requires += ` AND |Widget:all|`;
         } else if (location.category[0] != "Bomb 1 Checks") {
             let bombIxMinusOne = Number.parseInt(location.category[0].split(" ")[1]) - 1;
             location.requires += ` AND |Widget:${bombIxMinusOne * widgetsPerBomb}|`;
