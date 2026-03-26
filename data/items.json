@@ -1,0 +1,141 @@
+{
+ "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.items.schema.json",
+ "data": [
+  {
+   "name": "Colour Flash",
+   "category": [
+    "Module",
+    "Bomb 1 Mods",
+    "Bomb 3 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "Piano Keys",
+   "category": [
+    "Module",
+    "Bomb 1 Mods",
+    "Bomb 5 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "Semaphore",
+   "category": [
+    "Module",
+    "Bomb 1 Mods",
+    "Bomb 5 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "Emoji Math",
+   "category": [
+    "Module",
+    "Bomb 1 Mods",
+    "Bomb 5 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "Word Scramble",
+   "category": [
+    "Module",
+    "Bomb 1 Mods",
+    "Bomb 2 Mods",
+    "Bomb 3 Mods",
+    "Bomb 4 Mods",
+    "Bomb 5 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "Two Bits",
+   "category": [
+    "Module",
+    "Bomb 2 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "Combination Lock",
+   "category": [
+    "Module",
+    "Bomb 2 Mods",
+    "Bomb 3 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "Orientation Cube",
+   "category": [
+    "Module",
+    "Bomb 2 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "Plumbing",
+   "category": [
+    "Module",
+    "Bomb 2 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "Switches",
+   "category": [
+    "Module",
+    "Bomb 3 Mods",
+    "Bomb 5 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "Foreign Exchange Rates",
+   "category": [
+    "Module",
+    "Bomb 3 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "Round Keypad",
+   "category": [
+    "Module",
+    "Bomb 4 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "Adventure Game",
+   "category": [
+    "Module",
+    "Bomb 4 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "3D Maze",
+   "category": [
+    "Module",
+    "Bomb 4 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "Number Pad",
+   "category": [
+    "Module",
+    "Bomb 4 Mods"
+   ],
+   "progression": true
+  },
+  {
+   "name": "Widget",
+   "category": "Widget",
+   "count": 15,
+   "progression": true
+  }
+ ]
+}

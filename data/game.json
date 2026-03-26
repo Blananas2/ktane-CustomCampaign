@@ -1,0 +1,15 @@
+{
+    "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.game.schema.json",
+    "game": "Keep Talking and Nobody Explodes (Custom Campaign)",
+    "creator": "Blananas2",
+
+    "filler_item_name": "Blank Manual Page",
+
+    "starting_items": [
+        {
+            "item_categories": ["Bomb 1 Mods"]
+        }
+    ],
+    "death_link": false,
+    "starting_index": 1
+}
