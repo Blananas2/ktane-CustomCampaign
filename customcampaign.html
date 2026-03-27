@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- <link rel="icon" href="img/favicon.ico" /> -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="initial-scale=1">
+    <title>KTANE Custom Campaign</title>
+  </head>
+  <style>
+    @font-face {
+      font-family: 'Inter';
+      src: url(font/Inter_18pt-Medium.ttf);
+    }
+
+    body {
+      background-color: #411A1A;
+      font-size: 24px;
+      margin-left: 160px;
+      margin-right: 160px;
+    }
+
+    p, ul {
+      font-family: 'Inter', Arial, sans-serif;
+      color: white;
+    }
+
+    p.tiny { 
+      font-size: 16px;
+      border-bottom: dashed 1px;
+      cursor: help;
+      margin: 0px;
+    }
+
+    input#moduleCounts { width: 500px; }
+
+    tr { 
+      height: 28px; 
+      margin-top: 0px;
+    }
+    td { width: 500px; }
+    th { width: 125px; }
+
+    div.bomb {
+      border-style: solid;
+      border-color: gray;
+      width: 800px;
+      margin-top: 0.5em;
+    }
+
+    p.bombTitle { 
+      text-decoration: underline; 
+      margin: 16px;
+      margin-bottom: -6px;
+    }
+
+    button.dmgButton { 
+      margin: 1em;
+      margin-left: 3em;
+    }
+
+    ul { 
+      margin: 12px;
+      margin-bottom: 30px;
+      margin-top: 0px;
+    }
+
+    input.checkbox {
+      width: 3em;
+      height: 3em;
+      margin: 1em;
+      margin-left: 2em;
+      margin-top: -20px;
+    }
+  </style>
+  <body>
+    <div id="restorePreviousSession"></div>
+    <p id="repoWait">Waiting for Repository of Manual Pages...</p>
+    <p id="appStatus">Please input your profile.</p>
+    <table>
+        <tr>
+          <th><p class="tiny" title="The file containing information on which modules you're familiar with.&#xa;All modules chosen for the campaign will come from enabled modules in your profile.">KTANE Profile</p></th>
+          <td style="background-color: #999999;"><input type="file" accept="application/json" id="fileInput"/></td>
+          <!-- have option to add vanillas in -->
+        </tr>
+        <tr>
+          <th><p class="tiny" title="Comma separated numbers that dictate the number of modules per bomb.&#xa;Any sequence of non-negative numbers is valid.">Module Counts</p></th>
+          <td><input id="moduleCounts" type="text"></td>
+          <!-- add a little counter for how many bombs / modules there are total -->
+          <!-- TODO: presets for module counts based on the vanilla campaign and shit idunno -->
+        </tr>
+        <tr>
+          <th><p title="The number used to 'randomly' generate your campaign.&#xa;So long as you ensure the all parameters match, not just the seed, the generated campaign will be the same." class="tiny">Seed Value</p></th>
+          <td><input id="seedValue" type="text"> <button id="random">Randomize</button> <button id="setToDate">Set to date</button> </td>
+        </tr>
+    </table>
+    <button id="generateCampaign">Generate Campaign</button>
+    <div id="apStuffs"></div>
+    <div id="campaign"></div>
+  </body>
+  <script>
+    const urlSearch = new URLSearchParams(window.location.search);
+
+    const rpsDiv = document.getElementById("restorePreviousSession");
+    const appStatus = document.getElementById("appStatus");
+    const modCountField = document.getElementById("moduleCounts");
+    const seedValueField = document.getElementById("seedValue");
+    const randomButton = document.getElementById("random");
+    const setToDateButton = document.getElementById("setToDate");
+    const generateCampaignButton = document.getElementById("generateCampaign");
+    const campaignDiv = document.getElementById("campaign");
+
+    let mode = urlSearch.get("m") ?? "casual";
+    let jsonValidated = false;
+    let repoFetched = false;
+    let ktaneJson;
+    let ktaneModules = [];
+    let enabledModules;
+    let campaign;
+    let dmgStrings;
+    let bombDivs;
+    let furthestBomb;
+
+    modCountField.value = "3, 3, 6, 4, 3, 3, 3, 4, 5, 5, 6, 8"; //Based on first 3 sections in vanilla
+    seedValueField.value = RNG(4294967296);
+
+    fetchRepoData();
+
+    async function fetchRepoData() {
+      let request = await fetch("https://ktane.timwi.de/json/raw");
+      ktaneJson = JSON.parse(await request.text()).KtaneModules;
+
+      for (let j = 0; j < ktaneJson.length; j++) {
+        if (!(ktaneJson[j].Type === "Regular" || ktaneJson[j].Type === "Needy") || ktaneJson[j].TranslationOf) {
+          continue;
+        } else {
+          ktaneModules.push([ktaneJson[j].ModuleID, ktaneJson[j].FileName ?? ktaneJson[j].Name]);
+        }
+      }
+
+      repoFetched = true;
+      document.getElementById("repoWait").remove();
+      checkLocalStorage();
+    }
+
+    function checkLocalStorage() {
+      if (localStorage.getItem("Seed value")) {
+        let rpsButton = document.createElement("button");
+        rpsButton.addEventListener("click", (event) => { retrieveLocalStorage(); });
+        rpsButton.innerText = "Restore Previous Session";
+        rpsDiv.appendChild(rpsButton);
+        appStatus.textContent = "Click the above button to restore previous session info.";
+      }
+    }
+
+    function retrieveLocalStorage() {
+      mode = localStorage.getItem("Mode");
+      enabledModules = JSON.parse(localStorage.getItem("Profile-enabled modules"))
+      modCountField.value = localStorage.getItem("Module counts");
+      seedValueField.value = localStorage.getItem("Seed value");
+      campaign = JSON.parse(localStorage.getItem("Generated campaign"));
+      furthestBomb = localStorage.getItem("Furthest bomb");
+
+      visualizeCampaign(true);
+      appStatus.textContent = `Restored campaign from profile with ${enabledModules.length} enabled modules.`;
+      rpsDiv.innerHTML = "";
+    }
+
+    document.getElementById("fileInput").addEventListener("change", (event) => {
+      const file = event.target.files[0];
+
+      if (!file) return;
+
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const content = e.target.result;
+        const data = JSON.parse(content);
+        checkJson(data);
+      };
+
+      reader.readAsText(file);
+    });
+
+    function checkJson(file) {
+      if (Object.hasOwn(file, "Operation") && Object.hasOwn(file, "EnabledList")) {
+        enabledModules = file.EnabledList;
+        appStatus.textContent = `Profile contains ${enabledModules.length} enabled modules.`;
+        jsonValidated = true;
+      } else {
+        appStatus.textContent = "That does not look like a KTANE profile.";
+      }
+    }
+
+    randomButton.addEventListener("click", (event) => {
+      seedValueField.value = RNG(4294967296);
+    });
+
+    setToDateButton.addEventListener("click", (event) => {
+      let now = new Date();
+      seedValueField.value = [now.getFullYear(), (now.getMonth()+1).toString().padStart(2, "0"), now.getDate().toString().padStart(2, "0")].join("");
+    });
+
+    generateCampaignButton.addEventListener("click", (event) => {
+      if (jsonValidated && repoFetched) {
+        rpsDiv.remove();
+
+        let countsString = modCountField.value;
+        if (countsString.match(/^\d+(,\s*\d+)*$/)) {
+          document.body.style.backgroundColor = "#411A1A";
+
+          campaign = [];
+
+          let seed = stringToSeed(seedValueField.value);
+          let PRNG = mulberry32(seed);
+
+          countsString = countsString.replaceAll(/\s/g, "").split(',');
+          countsString.forEach(number => {
+            let bomb = [];
+            for (n = 0; n < number; n++) {
+              bomb.push(enabledModules[PRNG(enabledModules.length)]);
+            }
+            campaign.push(bomb);
+          });
+          createDMGStrings();
+          visualizeCampaign(false);
+          bulkSetLocalStorage();
+        } else { appStatus.textContent = "Can't parse the module counts."; }
+      } else { appStatus.textContent = "Can't generate without a KTANE profile."; }
+    });
+
+    function visualizeCampaign(restored) {
+      campaignDiv.innerHtml = "";
+      let apFlag = mode == "archipelago";
+
+      bombDivs = [];
+      let bombCount = 1;
+
+      campaign.forEach(bomb => {
+        let bombDiv = document.createElement("div");
+        let modulesUl = document.createElement("ul");
+        let bombTitle = document.createElement("p");
+        bombDiv.classList.add("bomb");
+        
+        bombTitle.textContent = "Bomb " + bombCount++;
+        bombTitle.classList.add("bombTitle");
+        bombDiv.appendChild(bombTitle);
+
+        let currentTotal = bombDivs.length;
+
+        let dmgButton = document.createElement("button");
+        dmgButton.classList.add("dmgButton");
+        dmgButton.addEventListener("click", () => {
+          writeClipboardText(dmgStrings[currentTotal]);
+        });
+        dmgButton.innerText = "Copy DMG String";
+        bombDiv.appendChild(dmgButton);
+
+        if (!apFlag) {
+          bomb.forEach(module => {
+            let moduleName = ktaneModules.find((entry) => entry[0] == module)[1];
+            let moduleLi = document.createElement("li");
+            moduleLi.textContent = moduleName;
+            modulesUl.appendChild(moduleLi);
+          });
+          bombDiv.appendChild(modulesUl);
+
+          let checkbox = document.createElement("input");
+          checkbox.classList.add("checkbox");
+          checkbox.type = "checkbox";
+          if (restored && currentTotal < furthestBomb - 1) { checkbox.checked = true; }
+          checkbox.addEventListener("change", () => {
+            try {
+              if (campaignDiv.getElementsByTagName('div').length == currentTotal + 1) { 
+                campaignDiv.appendChild(bombDivs[currentTotal + 1]);
+                localStorage.setItem("Furthest bomb", currentTotal + 2);
+              } 
+            } catch (error) {
+              document.body.style.backgroundColor = "#1A411A";
+              appStatus.textContent = "Congratulations! Press the button above to clear the session from memory.";
+              let clearButton = document.createElement("button");
+              clearButton.addEventListener("click", () => {
+                localStorage.clear();
+                rpsDiv.innerHTML = "";
+                campaignDiv.innerHTML = "";
+              });
+              clearButton.innerText = "Clear session";
+              rpsDiv.appendChild(clearButton);
+            }
+          });
+          bombDiv.appendChild(checkbox);
+        }
+
+        bombDivs.push(bombDiv);
+        if (restored) {
+          if (((currentTotal + 1) <= furthestBomb) || apFlag) { campaignDiv.appendChild(bombDiv); }
+        } else {
+          if (apFlag || (currentTotal + 1) == 1) { campaignDiv.appendChild(bombDiv); }
+        }
+      });
+
+      if (!restored) { localStorage.setItem("Furthest bomb", apFlag ? -1 : 1); }
+    }
+
+    function bulkSetLocalStorage() {
+      localStorage.setItem("Mode", mode);
+      localStorage.setItem("Profile-enabled modules", JSON.stringify(enabledModules));
+      localStorage.setItem("Module counts", modCountField.value);
+      localStorage.setItem("Seed value", seedValueField.value);
+      localStorage.setItem("Generated campaign", JSON.stringify(campaign));
+    }
+
+    function createDMGStrings() {
+      dmgStrings = [];
+      campaign.forEach(bomb => {
+        let dmgString = `mode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
+        dmgString += bomb.join("\n");
+        dmgStrings.push(dmgString);
+      });
+    }
+
+    function RNG(x) {
+      return Math.floor(Math.random() * x);
+    }
+
+    function stringToSeed(str) {
+      let hash = 0;
+
+      for (let i = 0; i < str.length; i++) {
+        hash = (hash << 5) - hash + str.charCodeAt(i);
+        hash |= 0;
+      }
+
+      return hash;
+    }
+
+    function mulberry32(seed) {
+      return function(max) {
+        seed |= 0;
+        seed = seed + 0x6D2B79F5 | 0;
+        let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        let result = ((t ^ t >>> 14) >>> 0) / 4294967296;
+
+        return Math.floor(result * max);
+      };
+    }
+
+    async function writeClipboardText(text) {
+      await navigator.clipboard.writeText(text);
+    }
+  </script>
+</html>
