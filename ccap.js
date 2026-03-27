@@ -1,5 +1,7 @@
 //this JS tool, intended to be used with node or via a webapp, is for converting a campaign to item and location jsons for Manual Archipelago
 
+//TODO: handle multiple instances of the same module on the same bomb, they should not have identical names because Manual will treat them as the same.
+
 let fs = require("fs");
 let camp = [ //contrived example to get the point across; when in actual use, other tools will generate the campaign, it won't be static like in this case
     [ "Colour Flash", "Piano Keys", "Semaphore", "Emoji Math", "Word Scramble" ],

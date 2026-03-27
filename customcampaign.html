@@ -26,9 +26,11 @@
 
     p.tiny { 
       font-size: 16px;
-      border-bottom: dashed 1px;
-      cursor: help;
       margin: 0px;
+    }
+    p.explain { 
+      border-bottom: dashed 1px; 
+      cursor: help;
     }
 
     input#moduleCounts { width: 500px; }
@@ -78,18 +80,18 @@
     <p id="appStatus">Please input your profile.</p>
     <table>
         <tr>
-          <th><p class="tiny" title="The file containing information on which modules you're familiar with.&#xa;All modules chosen for the campaign will come from enabled modules in your profile.">KTANE Profile</p></th>
+          <th><p class="tiny explain" title="The file containing information on which modules you're familiar with.&#xa;All modules chosen for the campaign will come from enabled modules in your profile.">KTANE Profile</p></th>
           <td style="background-color: #999999;"><input type="file" accept="application/json" id="fileInput"/></td>
-          <!-- have option to add vanillas in -->
+          <!-- <th><p class="tiny" title="Check this box to include vanilla modules.">Add vanillas?</p></th>
+          <td><input id="addVanillas" type="checkbox"></td> -->
         </tr>
         <tr>
-          <th><p class="tiny" title="Comma separated numbers that dictate the number of modules per bomb.&#xa;Any sequence of non-negative numbers is valid.">Module Counts</p></th>
+          <th><p class="tiny explain" title="Comma separated numbers that dictate the number of modules per bomb.&#xa;Any sequence of non-negative numbers is valid.">Module Counts</p></th>
           <td><input id="moduleCounts" type="text"></td>
-          <!-- add a little counter for how many bombs / modules there are total -->
-          <!-- TODO: presets for module counts based on the vanilla campaign and shit idunno -->
+          <td><p id="bombTotal" class="tiny">(12 bombs, 53 modules total)</p></td>
         </tr>
         <tr>
-          <th><p title="The number used to 'randomly' generate your campaign.&#xa;So long as you ensure the all parameters match, not just the seed, the generated campaign will be the same." class="tiny">Seed Value</p></th>
+          <th><p class="tiny explain" title="The number used to 'randomly' generate your campaign.&#xa;So long as you ensure the all parameters match, not just the seed, the generated campaign will be the same.">Seed Value</p></th>
           <td><input id="seedValue" type="text"> <button id="random">Randomize</button> <button id="setToDate">Set to date</button> </td>
         </tr>
     </table>
@@ -108,6 +110,8 @@
     const setToDateButton = document.getElementById("setToDate");
     const generateCampaignButton = document.getElementById("generateCampaign");
     const campaignDiv = document.getElementById("campaign");
+    //const vanillas = [ "BigButton", "Venn", "Keypad", "Maze", "Memory", "Morse", "Password", "Simon", "WhosOnFirst", "WireSequence", "Wires" ];
+    //TODO: vanilla checkbox functionality
 
     let mode = urlSearch.get("m") ?? "casual";
     let jsonValidated = false;
@@ -116,6 +120,7 @@
     let ktaneModules = [];
     let enabledModules;
     let campaign;
+    let generatedPreviously = false;
     let dmgStrings;
     let bombDivs;
     let furthestBomb;
@@ -188,8 +193,14 @@
         jsonValidated = true;
       } else {
         appStatus.textContent = "That does not look like a KTANE profile.";
+        jsonValidated = false;
       }
     }
+
+    modCountField.addEventListener("input", (event) => {
+      let moduleTotal = modCountField.value.replaceAll(/\s/g, '').split(',').map((v) => Number.parseInt(v)).reduce((a, c) => a + c, 0);
+      document.getElementById("bombTotal").innerText = `(${modCountField.value.split(',').length} bombs, ${moduleTotal} modules total)`;
+    });
 
     randomButton.addEventListener("click", (event) => {
       seedValueField.value = RNG(4294967296);
@@ -197,11 +208,16 @@
 
     setToDateButton.addEventListener("click", (event) => {
       let now = new Date();
-      seedValueField.value = [now.getFullYear(), (now.getMonth()+1).toString().padStart(2, "0"), now.getDate().toString().padStart(2, "0")].join("");
+      seedValueField.value = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, "0")}${now.getDate().toString().padStart(2, "0")}`;
     });
 
     generateCampaignButton.addEventListener("click", (event) => {
       if (jsonValidated && repoFetched) {
+        if (generatedPreviously) {
+          if (!window.confirm("Are you sure you want to generate another campaign? The current campaign will be overwritten.")) {
+            return;
+          }
+        }
         rpsDiv.remove();
 
         let countsString = modCountField.value;
@@ -224,12 +240,13 @@
           createDMGStrings();
           visualizeCampaign(false);
           bulkSetLocalStorage();
+          generatedPreviously = true;
         } else { appStatus.textContent = "Can't parse the module counts."; }
       } else { appStatus.textContent = "Can't generate without a KTANE profile."; }
     });
 
     function visualizeCampaign(restored) {
-      campaignDiv.innerHtml = "";
+      campaignDiv.innerHTML = "";
       let apFlag = mode == "archipelago";
 
       bombDivs = [];
