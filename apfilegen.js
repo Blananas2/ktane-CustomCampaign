@@ -1,6 +1,88 @@
 function downloadYAML(slotName, campHash) {
   let desc = `Keep Talking Custom Campaign for ${slotName} generated with hash ${campHash}`;
-  let yamlData = `name: ${slotName}||# Used to describe your yaml. Useful if you have multiple files.|description: ${desc}||game: Manual_Keep Talking and Nobody Explodes (Custom Campaign)_Blananas2|requires:|  version: 0.6.4 # Version of Archipelago required for this yaml to work as expected.||Manual_Keep Talking and Nobody Explodes (Custom Campaign)_Blananas2:|  ################|  # Game Options #|  ################|  progression_balancing:|    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.|    # |    # A lower setting means more getting stuck. A higher setting means less getting stuck.|    #|    # You can define additional values between the minimum and maximum values.|    # Minimum value is 0|    # Maximum value is 99|    random: 0|    random-low: 0|    random-high: 0|    disabled: 0 # equivalent to 0|    normal: 50 # equivalent to 50|    extreme: 0 # equivalent to 99||  accessibility:|    # Set rules for reachability of your items/locations.|    # |    # **Full:** ensure everything can be reached and acquired.|    # |    # **Minimal:** ensure what is needed to reach your goal can be acquired.|    full: 50|    minimal: 0||  ###########################|  # Item & Location Options #|  ###########################|  local_items:|    # Forces these items to be in their native world.|    []||  non_local_items:|    # Forces these items to be outside their native world.|    []||  start_inventory:|    # Start with the specified amount of these items. Example: "Bomb: 1"|    {}||  start_inventory_from_pool:|    # Start with the specified amount of these items and don't place them in the world. Example: "Bomb: 1"|    # |    # The game decides what the replacement items will be.|    {}||  start_hints:|    # Start with these item's locations prefilled into the \`\`!hint\`\` command.|    []||  start_location_hints:|    # Start with these locations and their item prefilled into the \`\`!hint\`\` command.|    []||  exclude_locations:|    # Prevent these locations from having an important item.|    []||  priority_locations:|    # Prevent these locations from having an unimportant item.|    []||  item_links:|    # Share part of your item pool with other players.|    []||  plando_items:|    # Generic items plando.|    []`.replaceAll('|', '\n');
+  let yamlData = [
+    `name: ${slotName}`,
+    ``,
+    `# Used to describe your yaml. Useful if you have multiple files.`,
+    `description: ${desc}`,
+    ``,
+    `game: Manual_Keep Talking and Nobody Explodes (Custom Campaign ${campHash})_Blananas2`,
+    `requires:`,
+    `  version: 0.6.4 # Version of Archipelago required for this yaml to work as expected.`,
+    ``,
+    `Manual_Keep Talking and Nobody Explodes (Custom Campaign ${campHash})_Blananas2:`,
+    `  ################`,
+    `  # Game Options #`,
+    `  ################`,
+    `  progression_balancing:`,
+    `    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.`,
+    `    #`,
+    `    # A lower setting means more getting stuck. A higher setting means less getting stuck.`,
+    `    #`,
+    `    # You can define additional values between the minimum and maximum values.`,
+    `    # Minimum value is 0`,
+    `    # Maximum value is 99`,
+    `    random: 0`,
+    `    random-low: 0`,
+    `    random-high: 0`,
+    `    disabled: 0 # equivalent to 0`,
+    `    normal: 50 # equivalent to 50`,
+    `    extreme: 0 # equivalent to 99`,
+    ``,
+    `  accessibility:`,
+    `    # Set rules for reachability of your items/locations.`,
+    `    #`,
+    `    # **Full:** ensure everything can be reached and acquired.`,
+    `    #`,
+    `    # **Minimal:** ensure what is needed to reach your goal can be acquired.`,
+    `    full: 50`,
+    `    minimal: 0`,
+    ``,
+    `  ###########################`,
+    `  # Item & Location Options #`,
+    `  ###########################`,
+    `  local_items:`,
+    `    # Forces these items to be in their native world.`,
+    `    []`,
+    ``,
+    `  non_local_items:`,
+    `    # Forces these items to be outside their native world.`,
+    `    []`,
+    ``,
+    `  start_inventory:`,
+    `    # Start with the specified amount of these items. Example: "Bomb: 1"`,
+    `    {}`,
+    ``,
+    `  start_inventory_from_pool:`,
+    `    # Start with the specified amount of these items and don't place them in the world. Example: "Bomb: 1"`,
+    `    #`,
+    `    # The game decides what the replacement items will be.`,
+    `    {}`,
+    ``,
+    `  start_hints:`,
+    `    # Start with these item's locations prefilled into the \`\`!hint\`\` command.`,
+    `    []`,
+    ``,
+    `  start_location_hints:`,
+    `    # Start with these locations and their item prefilled into the \`\`!hint\`\` command.`,
+    `    []`,
+    ``,
+    `  exclude_locations:`,
+    `    # Prevent these locations from having an important item.`,
+    `    []`,
+    ``,
+    `  priority_locations:`,
+    `    # Prevent these locations from having an unimportant item.`,
+    `    []`,
+    ``,
+    `  item_links:`,
+    `    # Share part of your item pool with other players.`,
+    `    []`,
+    ``,
+    `  plando_items:`,
+    `    # Generic items plando.`,
+    `    []`
+  ].join('\n');
   let yamlFile = new File([yamlData], `${slotName}.yaml`, { type: "application/yaml" });
 
   downloadFile(`${slotName}.yaml`, yamlFile, yamlFile.type);
@@ -9,32 +91,36 @@ function downloadYAML(slotName, campHash) {
 async function downloadApworld(camp, campHash) {
   const zip = new JSZip();
 
-  let itemsAndLocations = generateManualData(camp);
+  let worldSpecific = generateManualData(camp, campHash);
   
-  const manifest = await fetch('manifest.json').then(r => r.json());
+  const manifest = await fetch("manifest.json").then(r => r.json());
 
   await Promise.all(
     manifest.files.map(async (fileName) => {
       const res = await fetch(`Manual_KTCC_Blan/${fileName}`);
       const content = await res.text();
 
-      zip.file(`Manual_KTCC${campHash}_Blan${fileName}`, content);
+      zip.file(`Manual_KTCC${campHash}_Blan/${fileName}`, content);
     })
   );
-  zip.file(`Manual_KTCC${campHash}_Blan/data/items.json`, JSON.stringify(itemsAndLocations[0], null, 4));
-  zip.file(`Manual_KTCC${campHash}_Blan/data/locations.json`, JSON.stringify(itemsAndLocations[1], null, 4));
-  //I had to update the above function to give the world the proper name of "Manual_Keep Talking and Nobody Explodes (Custom Campaign)_Blananas2"
-  //It should be fine if one slot does KTCC, but if multiple do it can result in a collision where multiple slots use the same file instead of distinct ones
-  //Thus, if I want to avoid collisions, in addition to giving the yaml the correct name like it used to, so would the apworld
-  //But it's 1AM now so I'm dealing with this laterTM
-  //  also i didn't test if the folder within folder thing i needed to do actually worked uh if not i'll find out the hard way
+  zip.file(`Manual_KTCC${campHash}_Blan/data/game.json`, JSON.stringify(worldSpecific[0], null, 4));
+  zip.file(`Manual_KTCC${campHash}_Blan/data/items.json`, JSON.stringify(worldSpecific[1], null, 4));
+  zip.file(`Manual_KTCC${campHash}_Blan/data/locations.json`, JSON.stringify(worldSpecific[2], null, 4));
 
-  console.log(Object.keys(zip.files));
-  let apworldBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-  downloadFile(`Manual_KTCC${campHash}_Blan.apworld`, apworldBlob, 'application/zip');
+  let apworldBlob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+  downloadFile(`Manual_KTCC${campHash}_Blan.apworld`, apworldBlob, "application/zip");
 }
 
-function generateManualData(camp) {
+function generateManualData(camp, campHash) {
+  let game = {
+    "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.game.schema.json",
+    "game": `Keep Talking and Nobody Explodes (Custom Campaign ${campHash})`,
+    "creator": "Blananas2",
+    "filler_item_name": "Blank Manual Page",
+    "starting_items": [ { "item_categories": ["Bomb 1 Mods"] } ],
+    "death_link": false,
+    "starting_index": 1
+  };
   let items = { 
     "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.items.schema.json",
     data: [] 
@@ -80,15 +166,15 @@ function generateManualData(camp) {
   });
   locations.data.push({
     name: "All Bombs Defused",
-    requires: "|@Module:all| AND |@Bomb Defused Checks:all|",
+    requires: "|@Module:all|",
     victory: true
   });
 
-  let moduleItemCount = items.data.length;
+  //We add widgets to each bomb (apart from the first) to balance out the number of
+  //Incoming checks (items, distinct modules) and outgoing checks (locations, defusing module on every bomb + defusing the entire bomb)
+  //Note that the items can *never* exceed the number of locations, as Manual/Archipelago simply can't allow it
   let bombCount = camp.length;
-  let widgetsPerBomb = Math.floor(((locations.data.length - 1) - moduleItemCount) / (bombCount - 1)); 
-  /*** the first -1 above is so that the victory condition doesn't contribute to the count, that can result in the item checks exceeding the location checks
-  which Manual/Archipelago just doesn't allow, the second is so that the first bomb doesn't need widgets (i just think it's cleaner/funnier that way) ***/
+  let widgetsPerBomb = calculateWidgetsPerBomb();
   if (widgetsPerBomb > 0) {
     items.data.push({
       name: "Widget",
@@ -106,7 +192,7 @@ function generateManualData(camp) {
     });
   }
 
-  return [ items, locations ];
+  return [ game, items, locations ];
 }
 
 function downloadFile(filename, content, mimeType) {

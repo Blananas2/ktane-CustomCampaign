@@ -2,7 +2,6 @@
   "files": [
     "data/categories.json",
     "data/events.json",
-    "data/game.json",
     "data/meta.json",
     "data/options.json",
     "data/regions.json",

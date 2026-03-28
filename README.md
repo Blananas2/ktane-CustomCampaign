@@ -5,6 +5,7 @@ As input, you'll need a profile. If you don't have one, refer to the [profile ed
 
 To play the missions, you'll need every module your profile contains already installed, and [Dynamic Mission Generator](https://steamcommunity.com/sharedfiles/filedetails/?id=1633427044) and its dependancies. The app will provide you with the "DMG strings" to copy into the Dynamic Mission Generator app to play each mission.
 
-This webapp was designed with [Manual](https://github.com/ManualForArchipelago/Manual/blob/main/README.md) for [Archipelago](https://archipelago.gg/) in mind. When `?m=archipelago` is appended to the URL, the tool (currently) only provides the DMG strings needed to play the missions easily.
+This webapp was designed with [Manual](https://github.com/ManualForArchipelago/Manual/blob/main/README.md) for [Archipelago](https://archipelago.gg/) in mind. When `?m=archipelago` is appended to the URL, the tool can also generate at provide yaml and apworld files.
 
-At time of writing, generate a Manual world involves a bit of technical knowhow and the knowledge of how Manual works. In the future, apworld and yaml generation will be provided via the app when the campaign is generated.
+This project would not have been without the help of other software, namely JSZip and Manual. See `JSZIP-LICENSE` and `MANUAL-LICENSE` for more information.
+You may also want to look at `DISCLOSURE.md` but tl;dr this project's development was aided by the use of AI, but was used responsibly.

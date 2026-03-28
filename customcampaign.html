@@ -116,6 +116,7 @@
     //TODO: vanilla checkbox functionality
 
     let mode = urlSearch.get("m") ?? "casual";
+    let apFlag = mode == "archipelago";
     let jsonValidated = false;
     let repoFetched = false;
     let ktaneJson;
@@ -200,7 +201,7 @@
     }
 
     modCountField.addEventListener("input", (event) => {
-      let moduleTotal = modCountField.value.replaceAll(/\s/g, '').split(',').map((v) => Number.parseInt(v)).reduce((a, c) => a + c, 0);
+      let moduleTotal = modCountField.value.replaceAll(/\s/g, "").split(',').map((v) => Number.parseInt(v)).reduce((a, c) => a + c, 0);
       document.getElementById("bombTotal").innerText = `(${modCountField.value.split(',').length} bombs, ${moduleTotal} modules total)`;
     });
 
@@ -250,7 +251,6 @@
 
     function visualizeCampaign(restored) {
       campaignDiv.innerHTML = "";
-      let apFlag = mode == "archipelago";
 
       bombDivs = [];
       let bombCount = 1;
@@ -376,11 +376,18 @@
 
     function createDMGStrings() {
       dmgStrings = [];
+      let widgetTotal = apFlag ? `widgets:${calculateWidgetsPerBomb()}` : "";
       campaign.forEach(bomb => {
-        let dmgString = `mode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
+        let dmgString = `mode:normal nopacing ${(bomb.length)*2}:00 5X ${widgetTotal}\n\n`;
         dmgString += bomb.join("\n");
         dmgStrings.push(dmgString);
       });
+    }
+
+    function calculateWidgetsPerBomb() {
+      let distinctModules = new Set(campaign.flat()).size;
+      //For Custom Campaign AP, we avoid giving the first bomb any widgets so that game.json doesn't need to have any widget starting items
+      return Math.floor((campaign.length - distinctModules) / (campaign.length - 1));
     }
 
     function RNG(x) {
