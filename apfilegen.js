@@ -11,11 +11,11 @@ async function downloadApworld(camp, campHash) {
 
   let itemsAndLocations = generateManualData(camp);
   
-  const manifest = await fetch('/manifest.json').then(r => r.json());
+  const manifest = await fetch('manifest.json').then(r => r.json());
 
   await Promise.all(
     manifest.files.map(async (file) => {
-      const res = await fetch(`/Manual_KTCC_Blan/${file}`);
+      const res = await fetch(`Manual_KTCC_Blan/${file}`);
       const content = await res.text();
 
       zip.file(file, content);
