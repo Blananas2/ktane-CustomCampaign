@@ -168,6 +168,7 @@
       campaign = JSON.parse(localStorage.getItem("Generated campaign"));
       furthestBomb = localStorage.getItem("Furthest bomb");
 
+      createDMGStrings();
       visualizeCampaign(true);
       appStatus.textContent = `Restored campaign from profile with ${enabledModules.length} enabled modules.`;
       rpsDiv.innerHTML = "";
