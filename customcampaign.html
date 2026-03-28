@@ -99,6 +99,7 @@
     <div id="apStuffs"></div>
     <div id="campaign"></div>
   </body>
+  <script src='apfilegen.js'></script>
   <script>
     const urlSearch = new URLSearchParams(window.location.search);
 
@@ -240,6 +241,7 @@
           createDMGStrings();
           visualizeCampaign(false);
           bulkSetLocalStorage();
+          if (mode == "archipelago") { doAPStuffs(); }
           generatedPreviously = true;
         } else { appStatus.textContent = "Can't parse the module counts."; }
       } else { appStatus.textContent = "Can't generate without a KTANE profile."; }
@@ -324,6 +326,38 @@
       localStorage.setItem("Module counts", modCountField.value);
       localStorage.setItem("Seed value", seedValueField.value);
       localStorage.setItem("Generated campaign", JSON.stringify(campaign));
+    }
+
+    function doAPStuffs() {
+      let apDiv = document.getElementById("apStuffs");
+      let table = document.createElement("table");
+      let slotTr = document.createElement("tr");
+      let slotTh = document.createElement("th");
+      let slotP = document.createElement("p");
+      slotP.innerText = "Slot name";
+      slotP.classList.add("tiny", "explain");
+      slotP.title = "The name you'll use for identifying your slot in the multiworld.\nYour name is sufficient if this is your only game, but if not you must make all your slot names distinct.\nMust be between 1 and 16 characters.";
+      slotTh.appendChild(slotP);
+      let slotTd = document.createElement("td");
+      let slotBox = document.createElement("input");
+      slotBox.type = "text";
+      slotBox.maxLength = 16;
+      slotBox.id = "slotBox";
+      slotTd.appendChild(slotBox);
+      slotTr.appendChild(slotTh);
+      slotTr.appendChild(slotTd);
+      table.appendChild(slotTr);
+      apDiv.appendChild(table);
+      let yamlButton = document.createElement("button");
+      yamlButton.addEventListener("click", () => {
+        let slotName = document.getElementById("slotBox").value;
+        if (slotName.length == 0) { alert("Slot name is empty."); return; }
+        let campaignHash = stringToSeed(campaign.toString()).toString(16);
+        downloadYAML(slotName, campaignHash);
+        localStorage.setItem("Downloaded YAML", true);
+      });
+      yamlButton.innerHTML = "Download YAML";
+      apDiv.appendChild(yamlButton);
     }
 
     function createDMGStrings() {
