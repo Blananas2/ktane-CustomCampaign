@@ -1,0 +1,31 @@
+{
+  "files": [
+    "data/categories.json",
+    "data/events.json",
+    "data/game.json",
+    "data/meta.json",
+    "data/options.json",
+    "data/regions.json",
+    "hooks/__init__.py",
+    "hooks/Data.py",
+    "hooks/Helpers.py",
+    "hooks/Options.py",
+    "hooks/Rules.py",
+    "hooks/World.py",
+    "test/__init__.py",
+    "test/manual_test.py",
+    "__init__.py",
+    "container.py",
+    "Data.py",
+    "DataValidation.py",
+    "Game.py",
+    "Helpers.py",
+    "Items.py",
+    "Locations.py",
+    "ManualClient.py",
+    "Meta.py",
+    "Options.py",
+    "Regions.py",
+    "Rules.py"
+  ]
+}

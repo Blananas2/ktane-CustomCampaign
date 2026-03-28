@@ -99,6 +99,7 @@
     <div id="apStuffs"></div>
     <div id="campaign"></div>
   </body>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src='apfilegen.js'></script>
   <script>
     const urlSearch = new URLSearchParams(window.location.search);
@@ -358,6 +359,19 @@
       });
       yamlButton.innerHTML = "Download YAML";
       apDiv.appendChild(yamlButton);
+      let apworldButton = document.createElement("button");
+      apworldButton.addEventListener("click", () => {
+        let namedCampaign = [];
+        campaign.forEach(bomb => {
+          let bombArr = [];
+          bomb.forEach(module => { bombArr.push(ktaneModules.find((entry) => entry[0] == module)[1]); });
+          namedCampaign.push(bombArr);
+        });
+        let campaignHash = stringToSeed(campaign.toString()).toString(16);
+        downloadApworld(namedCampaign, campaignHash);
+      });
+      apworldButton.innerHTML = "Download apworld";
+      apDiv.appendChild(apworldButton);
     }
 
     function createDMGStrings() {

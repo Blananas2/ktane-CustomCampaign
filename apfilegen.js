@@ -6,6 +6,29 @@ function downloadYAML(slotName, campHash) {
   downloadFile(`${slotName}.yaml`, yamlFile, yamlFile.type);
 }
 
+async function downloadApworld(camp, campHash) {
+  const zip = new JSZip();
+
+  let itemsAndLocations = generateManualData(camp);
+  
+  const manifest = await fetch('/manifest.json').then(r => r.json());
+
+  await Promise.all(
+    manifest.files.map(async (file) => {
+      const res = await fetch(`/Manual_KTCC_Blan/${file}`);
+      const content = await res.text();
+
+      zip.file(file, content);
+    })
+  );
+  zip.file("data/items.json", JSON.stringify(itemsAndLocations[0], null, 4));
+  zip.file("data/locations.json", JSON.stringify(itemsAndLocations[1], null, 4));
+
+  console.log(Object.keys(zip.files));
+  let apworldBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+  downloadFile(`Manual_KTCC${campHash}_Blan.apworld`, apworldBlob, 'application/zip');
+}
+
 function generateManualData(camp) {
   let items = { 
     "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.items.schema.json",
@@ -17,6 +40,8 @@ function generateManualData(camp) {
   };
 
   let bombIx = 1;
+
+  //TODO: handle multiple instances of the same module on the same bomb, they should not have identical names because Manual will treat them as the same.
 
   camp.forEach(bomb => {
     let bombName = "Bomb " + bombIx;
@@ -75,6 +100,8 @@ function generateManualData(camp) {
       }
     });
   }
+
+  return [ items, locations ];
 }
 
 function downloadFile(filename, content, mimeType) {
