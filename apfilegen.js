@@ -6,11 +6,11 @@ function downloadYAML(slotName, campHash) {
     `# Used to describe your yaml. Useful if you have multiple files.`,
     `description: ${desc}`,
     ``,
-    `game: Manual_Keep Talking and Nobody Explodes (Custom Campaign ${campHash})_Blananas2`,
+    `game: Manual_KTCC${campHash}_Blananas2`,
     `requires:`,
     `  version: 0.6.4 # Version of Archipelago required for this yaml to work as expected.`,
     ``,
-    `Manual_Keep Talking and Nobody Explodes (Custom Campaign ${campHash})_Blananas2:`,
+    `Manual_KTCC${campHash}_Blananas2:`,
     `  ################`,
     `  # Game Options #`,
     `  ################`,
@@ -100,21 +100,21 @@ async function downloadApworld(camp, campHash) {
       const res = await fetch(`Manual_KTCC_Blan/${fileName}`);
       const content = await res.text();
 
-      zip.file(`Manual_KTCC${campHash}_Blan/${fileName}`, content);
+      zip.file(`Manual_KTCC${campHash}_Blananas2/${fileName}`, content);
     })
   );
-  zip.file(`Manual_KTCC${campHash}_Blan/data/game.json`, JSON.stringify(worldSpecific[0], null, 4));
-  zip.file(`Manual_KTCC${campHash}_Blan/data/items.json`, JSON.stringify(worldSpecific[1], null, 4));
-  zip.file(`Manual_KTCC${campHash}_Blan/data/locations.json`, JSON.stringify(worldSpecific[2], null, 4));
+  zip.file(`Manual_KTCC${campHash}_Blananas2/data/game.json`, JSON.stringify(worldSpecific[0], null, 4));
+  zip.file(`Manual_KTCC${campHash}_Blananas2/data/items.json`, JSON.stringify(worldSpecific[1], null, 4));
+  zip.file(`Manual_KTCC${campHash}_Blananas2/data/locations.json`, JSON.stringify(worldSpecific[2], null, 4));
 
   let apworldBlob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
-  downloadFile(`Manual_KTCC${campHash}_Blan.apworld`, apworldBlob, "application/zip");
+  downloadFile(`Manual_KTCC${campHash}_Blananas2.apworld`, apworldBlob, "application/zip");
 }
 
 function generateManualData(camp, campHash) {
   let game = {
     "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.game.schema.json",
-    "game": `Keep Talking and Nobody Explodes (Custom Campaign ${campHash})`,
+    "game": `KTCC${campHash}`,
     "creator": "Blananas2",
     "filler_item_name": "Blank Manual Page",
     "starting_items": [ { "item_categories": ["Bomb 1 Mods"] } ],
