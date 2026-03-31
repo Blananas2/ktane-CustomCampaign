@@ -2,5 +2,5 @@ The creation of this app would not have been done in a timely manner without the
 - I wanted it done as quickly so people can use the tool in Archipelago multiworlds as soon as possible.
 - Many of the app's features, such as zip creation, required knowledge that would've been cumbersome to obtain via search engines.
 - If possible, I wanted the app to be made myself. Asking help from other people is not only slow, but is difficult for me as an introvert.
-- I recognize that AI is a *tool, not a replacement*. I used [documentation](https://developer.mozilla.org/en-US/) for anything I didn't understand and boilerplate I considered very carefully. No code was included or run until I was sure it was appropriate and safe.
+- I recognize that AI is a *tool, not a replacement*. I used [documentation](https://developer.mozilla.org/en-US/) for anything I didn't understand and boilerplate was heavily scrutinized. No code was included or run until I was sure it was appropriate and safe.
 - AI was used as a last resort, I know most of us have a strong distain towards it, especially in regards to other disciplines such as AI "art", but for programming the consesus is more positive than negative. Trust me, I wanted to avoid it, I avoided it where reasonable for the entirety of 2025, but I think I can justify using it for this project, especially if I disclose it like this.

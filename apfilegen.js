@@ -170,28 +170,6 @@ function generateManualData(camp, campHash) {
     victory: true
   });
 
-  //We add widgets to each bomb (apart from the first) to balance out the number of
-  //Incoming checks (items, distinct modules) and outgoing checks (locations, defusing module on every bomb + defusing the entire bomb)
-  //Note that the items can *never* exceed the number of locations, as Manual/Archipelago simply can't allow it
-  let bombCount = camp.length;
-  let widgetsPerBomb = calculateWidgetsPerBomb();
-  if (widgetsPerBomb > 0) {
-    items.data.push({
-      name: "Widget",
-      category: "Widget",
-      count: widgetsPerBomb * bombCount,
-      progression: true
-    });
-    locations.data.forEach(location => {
-      if (location.name == "All Bombs Defused") { 
-        location.requires += ` AND |Widget:all|`;
-      } else if (location.category[0] != "Bomb 1 Checks") {
-        let bombIxMinusOne = Number.parseInt(location.category[0].split(" ")[1]) - 1;
-        location.requires += ` AND |Widget:${bombIxMinusOne * widgetsPerBomb}|`;
-      }
-    });
-  }
-
   return [ game, items, locations ];
 }
 
