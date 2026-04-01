@@ -164,6 +164,9 @@ function generateManualData(camp, campHash) {
 
     bombIx++;
   });
+
+  //TODO: add freeplay missions here
+
   locations.data.push({
     name: "All Bombs Defused",
     requires: "|@Module:all|",

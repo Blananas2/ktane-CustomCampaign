@@ -115,6 +115,7 @@
     //const vanillas = [ "BigButton", "Venn", "Keypad", "Maze", "Memory", "Morse", "Password", "Simon", "WhosOnFirst", "WireSequence", "Wires" ];
     //TODO: vanilla checkbox functionality
 
+    const NATO = [ "Alfa", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliett", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu" ];
     let mode = urlSearch.get("m") ?? "casual";
     let apFlag = mode == "archipelago";
     let jsonValidated = false;
@@ -123,6 +124,7 @@
     let ktaneModules = [];
     let enabledModules;
     let campaign;
+    let freeplayBombs = [];
     let generatedPreviously = false;
     let dmgStrings;
     let bombDivs;
@@ -202,7 +204,7 @@
     }
 
     modCountField.addEventListener("input", (event) => {
-      let moduleTotal = modCountField.value.replaceAll(/\s/g, "").split(',').map((v) => Number.parseInt(v)).reduce((a, c) => a + c, 0);
+      let moduleTotal = sum(modCountField.value.replaceAll(/\s/g, "").split(',').map((v) => Number.parseInt(v)));
       document.getElementById("bombTotal").innerText = `(${modCountField.value.split(',').length} bombs, ${moduleTotal} modules total)`;
     });
 
@@ -222,12 +224,10 @@
             return;
           }
         }
-        rpsDiv.remove();
+        rpsDiv.innerHTML = "";
 
         let countsString = modCountField.value;
         if (countsString.match(/^\d+(,\s*\d+)*$/)) {
-          document.body.style.backgroundColor = "#411A1A";
-
           campaign = [];
 
           let seed = stringToSeed(seedValueField.value);
@@ -241,14 +241,78 @@
             }
             campaign.push(bomb);
           });
+          if (apFlag) { 
+            if (campaign.length == 1) {
+              appStatus.textContent = "Campaign should have at least 2 bombs.";
+              return;
+            }
+            calculateLogicPath(); 
+          };
           createDMGStrings();
           visualizeCampaign(false);
           bulkSetLocalStorage();
-          if (mode == "archipelago") { doAPStuffs(); }
+          if (apFlag) { doAPStuffs(); }
           generatedPreviously = true;
         } else { appStatus.textContent = "Can't parse the module counts."; }
       } else { appStatus.textContent = "Can't generate without a KTANE profile."; }
     });
+
+    function calculateLogicPath() {
+      freeplayBombs = [];
+      let noDupes = campaign.map((bomb) => [...new Set(bomb)]);
+      let checkTotals = campaign.map((bomb) => bomb.length + 1);
+      let stripped = [...noDupes];
+
+      let modulesInLogic = noDupes[0];
+      let bombOrder = [ 0 ];
+      let checksToSpend = checkTotals[0];
+
+      while (bombOrder.length < campaign.length) {
+        let logicSet = new Set(modulesInLogic);
+        stripped = stripped.map((bomb) => bomb.filter((mod) => !logicSet.has(mod)));
+
+        let belowThresh = stripped.findIndex((bomb, ix) => (!bombOrder.includes(ix)) && (bomb.length <= checksToSpend));
+        if (belowThresh != -1) {
+          bombOrder.push(belowThresh);
+          checksToSpend -= stripped[belowThresh].length;
+          checksToSpend += checkTotals[belowThresh];
+        } else {
+          let adapted = stripped.map((bomb, ix) => bomb.length + (bombOrder.includes(ix) ? Number.MAX_SAFE_INTEGER : 0));
+          let minimum = Math.min(...adapted);
+          addFreeplayMissions(checksToSpend, minimum);
+          let minimumInPlay = stripped.findIndex((bomb, ix) => (!bombOrder.includes(ix)) && bomb.length == minimum);
+          bombOrder.push(minimumInPlay);
+          checksToSpend = checkTotals[minimumInPlay];
+        }
+        modulesInLogic.push(...stripped[bombOrder[bombOrder.length - 1]]);
+      }
+    }
+
+    function addFreeplayMissions(start, desired) {
+      let seq = [start];
+      let total = start;
+      let curNum = start + 1;
+      while ((total + curNum) < desired) {
+        seq.push(curNum);
+        total += curNum;
+        curNum++;
+      }
+      if (total != desired) {
+        seq.push(desired - total);
+      }
+
+      freeplayBombs.push(...seq);
+      freeplayBombs.sort((a, b) => a - b);
+    }
+
+    function createDMGStrings() {
+      dmgStrings = [];
+      campaign.forEach(bomb => {
+        let dmgString = `mode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
+        dmgString += bomb.join("\n");
+        dmgStrings.push(dmgString);
+      });
+    }
 
     function visualizeCampaign(restored) {
       campaignDiv.innerHTML = "";
@@ -262,7 +326,7 @@
         let bombTitle = document.createElement("p");
         bombDiv.classList.add("bomb");
         
-        bombTitle.textContent = "Bomb " + bombCount++;
+        bombTitle.textContent = `Mission ${natoExcel(bombCount++)}`;
         bombTitle.classList.add("bombTitle");
         bombDiv.appendChild(bombTitle);
 
@@ -303,6 +367,7 @@
                 localStorage.clear();
                 rpsDiv.innerHTML = "";
                 campaignDiv.innerHTML = "";
+                document.body.style.backgroundColor = "#411A1A";
               });
               clearButton.innerText = "Clear session";
               rpsDiv.appendChild(clearButton);
@@ -353,7 +418,7 @@
       let yamlButton = document.createElement("button");
       yamlButton.addEventListener("click", () => {
         let slotName = document.getElementById("slotBox").value;
-        if (slotName.length == 0) { alert("Slot name is empty."); return; }
+        if (slotName.length == 0) { appStatus.textContent = "Slot name is empty."; return; }
         let campaignHash = stringToSeed(campaign.toString()).toString(16);
         downloadYAML(slotName, campaignHash);
         localStorage.setItem("Downloaded YAML", true);
@@ -373,15 +438,6 @@
       });
       apworldButton.innerHTML = "Download apworld";
       apDiv.appendChild(apworldButton);
-    }
-
-    function createDMGStrings() {
-      dmgStrings = [];
-      campaign.forEach(bomb => {
-        let dmgString = `mode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
-        dmgString += bomb.join("\n");
-        dmgStrings.push(dmgString);
-      });
     }
 
     function RNG(x) {
@@ -413,6 +469,23 @@
 
     async function writeClipboardText(text) {
       await navigator.clipboard.writeText(text);
+    }
+    
+    function natoExcel(n) {
+      let letters = [];
+
+      while (n > 0) {
+        n--;
+        let r = n % 26;
+        letters.push(NATO[r]);
+        n = (n / 26) | 0;
+      }
+
+      return letters.reverse().join(' ');
+    }
+
+    function sum(arr) {
+      return arr.reduce((a, c) => a + c, 0);
     }
   </script>
 </html>
