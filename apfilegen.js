@@ -117,7 +117,7 @@ function generateManualData(camp, campHash) {
     "game": `KTCC${campHash}`,
     "creator": "Blananas2",
     "filler_item_name": "Blank Manual Page",
-    "starting_items": [ { "item_categories": ["Bomb 1 Mods"] } ],
+    "starting_items": [ { "item_categories": ["Bomb Alfa Mods"] } ],
     "death_link": false,
     "starting_index": 1
   };
@@ -132,13 +132,22 @@ function generateManualData(camp, campHash) {
 
   let bombIx = 1;
 
-  //TODO: handle multiple instances of the same module on the same bomb, they should not have identical names because Manual will treat them as the same.
-
   camp.forEach(bomb => {
-    let bombName = "Bomb " + bombIx;
+    let bombName = "Bomb " + natoExcel(bombIx);
+
+    let moduleTotals = {};
+    bomb.forEach(module => {
+      moduleTotals[module] = (moduleTotals[module] || 0) + 1;
+    })
+
+    let moduleCounts = {};
 
     bomb.forEach(module => {
+      moduleCounts[module] = (moduleCounts[module] || 0) + 1;
+      let occurrence = moduleCounts[module];
+      let hasDuplicates = moduleTotals[module] > 1;
       let moduleEntry = items.data.find((entry) => entry.name == module);
+      
       if (!moduleEntry) {
         items.data.push({
           name: module,
@@ -147,11 +156,16 @@ function generateManualData(camp, campHash) {
         });
         moduleEntry = items.data.find((entry) => entry.name == module);
       }
+      
       if (!moduleEntry.category.includes(`${bombName} Mods`)) {
         moduleEntry.category.push(`${bombName} Mods`);
       }
+
+      let locationName = `${bombName} - ${module}`;
+      if (hasDuplicates) { locationName += ` #${occurrence}`; }
+
       locations.data.push({
-        name: `${bombName} - ${module}`,
+        name: locationName,
         category: [`${bombName} Checks`],
         requires: `|@${bombName} Mods:all|`
       });
@@ -165,7 +179,19 @@ function generateManualData(camp, campHash) {
     bombIx++;
   });
 
-  //TODO: add freeplay missions here
+  freeplayModules.forEach((module) => {
+    let moduleEntry = items.data.find((entry) => entry.name == module.name);
+    moduleEntry.category.push(`Freeplay Set #${module.setToInsert}`);
+  });
+
+  freeplayBombs.forEach((bomb) => {
+    let fpName = `Freeplay #${bomb.index}`;
+    locations.data.push({
+      name: `${fpName} Defused`,
+      category: [`${fpName}`, "Bomb Defused Checks"],
+      requires: `|@Freeplay Set #${bomb.set}:${bomb.modCount}|`
+    });
+  });
 
   locations.data.push({
     name: "All Bombs Defused",

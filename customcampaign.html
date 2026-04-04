@@ -97,7 +97,9 @@
     </table>
     <button id="generateCampaign">Generate Campaign</button>
     <div id="apStuffs"></div>
-    <div id="campaign"></div>
+    <div id="campaign">
+      <div id="freeplayArea"></div>
+    </div>
   </body>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src='apfilegen.js'></script>
@@ -124,6 +126,7 @@
     let ktaneModules = [];
     let enabledModules;
     let campaign;
+    let freeplayModules = [];
     let freeplayBombs = [];
     let generatedPreviously = false;
     let dmgStrings;
@@ -259,6 +262,7 @@
 
     function calculateLogicPath() {
       freeplayBombs = [];
+      freeplayModules = [];
       let noDupes = campaign.map((bomb) => [...new Set(bomb)]);
       let checkTotals = campaign.map((bomb) => bomb.length + 1);
       let stripped = [...noDupes];
@@ -266,6 +270,7 @@
       let modulesInLogic = noDupes[0];
       let bombOrder = [ 0 ];
       let checksToSpend = checkTotals[0];
+      let numberOfSets = 0;
 
       while (bombOrder.length < campaign.length) {
         let logicSet = new Set(modulesInLogic);
@@ -277,18 +282,25 @@
           checksToSpend -= stripped[belowThresh].length;
           checksToSpend += checkTotals[belowThresh];
         } else {
+          numberOfSets++;
           let adapted = stripped.map((bomb, ix) => bomb.length + (bombOrder.includes(ix) ? Number.MAX_SAFE_INTEGER : 0));
           let minimum = Math.min(...adapted);
-          addFreeplayMissions(checksToSpend, minimum);
+          addFreeplayMissions(checksToSpend, minimum, numberOfSets);
           let minimumInPlay = stripped.findIndex((bomb, ix) => (!bombOrder.includes(ix)) && bomb.length == minimum);
           bombOrder.push(minimumInPlay);
           checksToSpend = checkTotals[minimumInPlay];
+          stripped[bombOrder[bombOrder.length - 1]].forEach(module => {
+            freeplayModules.push({
+              name: moduleIdToName(module),
+              setToInsert: numberOfSets
+            });
+          });
         }
         modulesInLogic.push(...stripped[bombOrder[bombOrder.length - 1]]);
       }
     }
 
-    function addFreeplayMissions(start, desired) {
+    function addFreeplayMissions(start, desired, setId) {
       let seq = [start];
       let total = start;
       let curNum = start + 1;
@@ -301,8 +313,15 @@
         seq.push(desired - total);
       }
 
-      freeplayBombs.push(...seq);
-      freeplayBombs.sort((a, b) => a - b);
+      seq.forEach((v) => {
+        freeplayBombs.push({
+          index: freeplayBombs.length + 1,
+          set: setId,
+          modCount: v
+        });
+      });
+
+      //freeplayBombs.sort((a, b) => a.total - b.total); //i don't see much of a point but shit may hit the fan
     }
 
     function createDMGStrings() {
@@ -342,7 +361,7 @@
 
         if (!apFlag) {
           bomb.forEach(module => {
-            let moduleName = ktaneModules.find((entry) => entry[0] == module)[1];
+            let moduleName = moduleIdToName(module);
             let moduleLi = document.createElement("li");
             moduleLi.textContent = moduleName;
             modulesUl.appendChild(moduleLi);
@@ -401,6 +420,7 @@
       let slotTr = document.createElement("tr");
       let slotTh = document.createElement("th");
       let slotP = document.createElement("p");
+      apDiv.innerHTML = "";
       slotP.innerText = "Slot name";
       slotP.classList.add("tiny", "explain");
       slotP.title = "The name you'll use for identifying your slot in the multiworld.\nYour name is sufficient if this is your only game, but if not you must make all your slot names distinct.\nMust be between 1 and 16 characters.";
@@ -416,10 +436,10 @@
       table.appendChild(slotTr);
       apDiv.appendChild(table);
       let yamlButton = document.createElement("button");
+      let campaignHash = stringToSeed(campaign.toString()).toString(16);
       yamlButton.addEventListener("click", () => {
         let slotName = document.getElementById("slotBox").value;
         if (slotName.length == 0) { appStatus.textContent = "Slot name is empty."; return; }
-        let campaignHash = stringToSeed(campaign.toString()).toString(16);
         downloadYAML(slotName, campaignHash);
         localStorage.setItem("Downloaded YAML", true);
       });
@@ -430,19 +450,18 @@
         let namedCampaign = [];
         campaign.forEach(bomb => {
           let bombArr = [];
-          bomb.forEach(module => { bombArr.push(ktaneModules.find((entry) => entry[0] == module)[1]); });
+          bomb.forEach(module => { bombArr.push(moduleIdToName(module)); });
           namedCampaign.push(bombArr);
         });
-        let campaignHash = stringToSeed(campaign.toString()).toString(16);
         downloadApworld(namedCampaign, campaignHash);
       });
       apworldButton.innerHTML = "Download apworld";
       apDiv.appendChild(apworldButton);
     }
 
-    function RNG(x) {
-      return Math.floor(Math.random() * x);
-    }
+    function moduleIdToName(modId) { return ktaneModules.find((entry) => entry[0] == modId)[1]; }
+
+    function RNG(x) { return Math.floor(Math.random() * x); }
 
     function stringToSeed(str) {
       let hash = 0;
@@ -467,9 +486,7 @@
       };
     }
 
-    async function writeClipboardText(text) {
-      await navigator.clipboard.writeText(text);
-    }
+    async function writeClipboardText(text) { await navigator.clipboard.writeText(text); }
     
     function natoExcel(n) {
       let letters = [];
@@ -484,8 +501,6 @@
       return letters.reverse().join(' ');
     }
 
-    function sum(arr) {
-      return arr.reduce((a, c) => a + c, 0);
-    }
+    function sum(arr) { return arr.reduce((a, c) => a + c, 0); }
   </script>
 </html>
