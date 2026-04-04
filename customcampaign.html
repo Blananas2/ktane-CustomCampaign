@@ -126,8 +126,7 @@
     let ktaneModules = [];
     let enabledModules;
     let campaign;
-    let freeplayModules = [];
-    let freeplayBombs = [];
+    let freeplay;
     let generatedPreviously = false;
     let dmgStrings;
     let bombDivs;
@@ -261,8 +260,7 @@
     });
 
     function calculateLogicPath() {
-      freeplayBombs = [];
-      freeplayModules = [];
+      freeplay = [];
       let noDupes = campaign.map((bomb) => [...new Set(bomb)]);
       let checkTotals = campaign.map((bomb) => bomb.length + 1);
       let stripped = [...noDupes];
@@ -270,7 +268,6 @@
       let modulesInLogic = noDupes[0];
       let bombOrder = [ 0 ];
       let checksToSpend = checkTotals[0];
-      let numberOfSets = 0;
 
       while (bombOrder.length < campaign.length) {
         let logicSet = new Set(modulesInLogic);
@@ -282,25 +279,20 @@
           checksToSpend -= stripped[belowThresh].length;
           checksToSpend += checkTotals[belowThresh];
         } else {
-          numberOfSets++;
           let adapted = stripped.map((bomb, ix) => bomb.length + (bombOrder.includes(ix) ? Number.MAX_SAFE_INTEGER : 0));
           let minimum = Math.min(...adapted);
-          addFreeplayMissions(checksToSpend, minimum, numberOfSets);
+          let freeplayNumbers = findFreeplayNumbers(checksToSpend, minimum);
           let minimumInPlay = stripped.findIndex((bomb, ix) => (!bombOrder.includes(ix)) && bomb.length == minimum);
           bombOrder.push(minimumInPlay);
           checksToSpend = checkTotals[minimumInPlay];
-          stripped[bombOrder[bombOrder.length - 1]].forEach(module => {
-            freeplayModules.push({
-              name: moduleIdToName(module),
-              setToInsert: numberOfSets
-            });
-          });
+          let freeplayModules = stripped[bombOrder[bombOrder.length - 1]];
+          freeplayNumbers.forEach(n => { freeplay.push(freeplayModules.splice(0, n)); });
         }
         modulesInLogic.push(...stripped[bombOrder[bombOrder.length - 1]]);
       }
     }
 
-    function addFreeplayMissions(start, desired, setId) {
+    function findFreeplayNumbers(start, desired) {
       let seq = [start];
       let total = start;
       let curNum = start + 1;
@@ -313,15 +305,7 @@
         seq.push(desired - total);
       }
 
-      seq.forEach((v) => {
-        freeplayBombs.push({
-          index: freeplayBombs.length + 1,
-          set: setId,
-          modCount: v
-        });
-      });
-
-      //freeplayBombs.sort((a, b) => a.total - b.total); //i don't see much of a point but shit may hit the fan
+      return seq.sort((a, b) => a - b);
     }
 
     function createDMGStrings() {

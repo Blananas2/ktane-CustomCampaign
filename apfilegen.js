@@ -130,10 +130,8 @@ function generateManualData(camp, campHash) {
     data: [] 
   };
 
-  let bombIx = 1;
-
-  camp.forEach(bomb => {
-    let bombName = "Bomb " + natoExcel(bombIx);
+  camp.forEach((bomb, ix) => {
+    let bombName = "Bomb " + natoExcel(ix+1);
 
     let moduleTotals = {};
     bomb.forEach(module => {
@@ -175,21 +173,22 @@ function generateManualData(camp, campHash) {
       category: [`${bombName} Checks`, "Bomb Defused Checks"],
       requires: `|@${bombName} Mods:all|`
     });
-
-    bombIx++;
   });
 
-  freeplayModules.forEach((module) => {
-    let moduleEntry = items.data.find((entry) => entry.name == module.name);
-    moduleEntry.category.push(`Freeplay Set #${module.setToInsert}`);
-  });
+  freeplay.forEach((bomb, ix) => {
+    let bombName = `Freeplay #${ix+1}`;
+    bomb.forEach(module => {
+      let moduleEntry = items.data.find((entry) => entry.name == moduleIdToName(module));
 
-  freeplayBombs.forEach((bomb) => {
-    let fpName = `Freeplay #${bomb.index}`;
+      console.log(JSON.stringify(moduleEntry));
+      moduleEntry.category.push(`${bombName} Mods`);
+      console.log(JSON.stringify(moduleEntry));
+    });
+
     locations.data.push({
-      name: `${fpName} Defused`,
-      category: [`${fpName}`, "Bomb Defused Checks"],
-      requires: `|@Freeplay Set #${bomb.set}:${bomb.modCount}|`
+      name: `${bombName} Defused`,
+      category: [`${bombName} Checks`, "Bomb Defused Checks"],
+      requires: `|@${bombName} Mods:all|`
     });
   });
 
