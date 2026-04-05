@@ -8,7 +8,7 @@ function downloadYAML(slotName, campHash) {
     ``,
     `game: Manual_KTCC${campHash}_Blananas2`,
     `requires:`,
-    `  version: 0.6.4 # Version of Archipelago required for this yaml to work as expected.`,
+    `  version: 0.6.6 # Version of Archipelago required for this yaml to work as expected.`,
     ``,
     `Manual_KTCC${campHash}_Blananas2:`,
     `  ################`,
@@ -23,8 +23,9 @@ function downloadYAML(slotName, campHash) {
     `    # Minimum value is 0`,
     `    # Maximum value is 99`,
     `    random: 0`,
-    `    random-low: 0`,
-    `    random-high: 0`,
+    `    random-low: 0 # random value weighted towards lower values`,
+    `    random-high: 0 # random value weighted towards higher values`,
+    `    random-range-0-99: 0 # random value between 0 and 99`,
     `    disabled: 0 # equivalent to 0`,
     `    normal: 50 # equivalent to 50`,
     `    extreme: 0 # equivalent to 99`,
@@ -103,9 +104,11 @@ async function downloadApworld(camp, campHash) {
       zip.file(`Manual_KTCC${campHash}_Blananas2/${fileName}`, content);
     })
   );
+  //TODO: clean this up with a for
   zip.file(`Manual_KTCC${campHash}_Blananas2/data/game.json`, JSON.stringify(worldSpecific[0], null, 4));
   zip.file(`Manual_KTCC${campHash}_Blananas2/data/items.json`, JSON.stringify(worldSpecific[1], null, 4));
   zip.file(`Manual_KTCC${campHash}_Blananas2/data/locations.json`, JSON.stringify(worldSpecific[2], null, 4));
+  zip.file(`Manual_KTCC${campHash}_Blananas2/data/regions.json`, JSON.stringify(worldSpecific[3], null, 4));
 
   let apworldBlob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
   downloadFile(`Manual_KTCC${campHash}_Blananas2.apworld`, apworldBlob, "application/zip");
@@ -129,6 +132,7 @@ function generateManualData(camp, campHash) {
     "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.locations.schema.json",
     data: [] 
   };
+  let regions = {}; //fsr regions doesn't work like the rest, may be a Manual bug
 
   camp.forEach((bomb, ix) => {
     let bombName = "Bomb " + natoExcel(ix+1);
@@ -165,12 +169,14 @@ function generateManualData(camp, campHash) {
       locations.data.push({
         name: locationName,
         category: [`${bombName} Checks`],
+        region: bombName,
         requires: `|@${bombName} Mods:all|`
       });
     });
     locations.data.push({
       name: `${bombName} Defused`,
-      category: [`${bombName} Checks`, "Bomb Defused Checks"],
+      category: [`${bombName} Checks`],
+      region: bombName,
       requires: `|@${bombName} Mods:all|`
     });
   });
@@ -187,7 +193,8 @@ function generateManualData(camp, campHash) {
 
     locations.data.push({
       name: `${bombName} Defused`,
-      category: [`${bombName} Checks`, "Bomb Defused Checks"],
+      category: [`${bombName} Checks`],
+      region: bombName,
       requires: `|@${bombName} Mods:all|`
     });
   });
@@ -198,7 +205,15 @@ function generateManualData(camp, campHash) {
     victory: true
   });
 
-  return [ game, items, locations ];
+  overall.forEach((bomb, ix) => {
+    let regionInfo = {};
+    if (ix == 0) { regionInfo.starting = true; }
+    if (ix != overall.length - 1) { regionInfo.connects_to = [ overall[ix + 1] ]; }
+    console.log(`regionInfo: ${JSON.stringify(regionInfo)}`);
+    regions[bomb] = regionInfo;
+  });
+
+  return [ game, items, locations, regions ];
 }
 
 function downloadFile(filename, content, mimeType) {

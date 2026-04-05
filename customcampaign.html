@@ -127,6 +127,7 @@
     let enabledModules;
     let campaign;
     let freeplay;
+    let overall;
     let generatedPreviously = false;
     let dmgStrings;
     let bombDivs;
@@ -261,6 +262,7 @@
 
     function calculateLogicPath() {
       freeplay = [];
+      overall = [ "Bomb Alfa" ];
       let noDupes = campaign.map((bomb) => [...new Set(bomb)]);
       let checkTotals = campaign.map((bomb) => bomb.length + 1);
       let stripped = [...noDupes];
@@ -278,6 +280,7 @@
           bombOrder.push(belowThresh);
           checksToSpend -= stripped[belowThresh].length;
           checksToSpend += checkTotals[belowThresh];
+          overall.push(`Bomb ${natoExcel(belowThresh + 1)}`);
         } else {
           let adapted = stripped.map((bomb, ix) => bomb.length + (bombOrder.includes(ix) ? Number.MAX_SAFE_INTEGER : 0));
           let minimum = Math.min(...adapted);
@@ -286,7 +289,11 @@
           bombOrder.push(minimumInPlay);
           checksToSpend = checkTotals[minimumInPlay];
           let freeplayModules = stripped[bombOrder[bombOrder.length - 1]];
-          freeplayNumbers.forEach(n => { freeplay.push(freeplayModules.splice(0, n)); });
+          freeplayNumbers.forEach(n => { 
+            freeplay.push(freeplayModules.splice(0, n));
+            overall.push(`Freeplay #${freeplay.length}`);
+          });
+          overall.push(`Bomb ${natoExcel(minimumInPlay + 1)}`);
         }
         modulesInLogic.push(...stripped[bombOrder[bombOrder.length - 1]]);
       }

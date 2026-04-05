@@ -4,7 +4,6 @@
     "data/events.json",
     "data/meta.json",
     "data/options.json",
-    "data/regions.json",
     "hooks/__init__.py",
     "hooks/Data.py",
     "hooks/Helpers.py",
