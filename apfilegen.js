@@ -92,7 +92,7 @@ function downloadYAML(slotName, campHash) {
 async function downloadApworld(camp, campHash) {
   const zip = new JSZip();
 
-  let worldSpecific = generateManualData(camp, campHash);
+  let worldData = generateManualData(camp, campHash);
   
   const manifest = await fetch("manifest.json").then(r => r.json());
 
@@ -104,11 +104,12 @@ async function downloadApworld(camp, campHash) {
       zip.file(`Manual_KTCC${campHash}_Blananas2/${fileName}`, content);
     })
   );
-  //TODO: clean this up with a for
-  zip.file(`Manual_KTCC${campHash}_Blananas2/data/game.json`, JSON.stringify(worldSpecific[0], null, 4));
-  zip.file(`Manual_KTCC${campHash}_Blananas2/data/items.json`, JSON.stringify(worldSpecific[1], null, 4));
-  zip.file(`Manual_KTCC${campHash}_Blananas2/data/locations.json`, JSON.stringify(worldSpecific[2], null, 4));
-  zip.file(`Manual_KTCC${campHash}_Blananas2/data/regions.json`, JSON.stringify(worldSpecific[3], null, 4));
+  
+  let worldFiles = [ "game", "items", "locations", "regions" ];
+
+  for (let f = 0; f < worldFiles.length; f++) {
+    zip.file(`Manual_KTCC${campHash}_Blananas2/data/${worldFiles[f]}.json`, JSON.stringify(worldData[f], null, 4));
+  }
 
   let apworldBlob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
   downloadFile(`Manual_KTCC${campHash}_Blananas2.apworld`, apworldBlob, "application/zip");
@@ -132,7 +133,12 @@ function generateManualData(camp, campHash) {
     "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.locations.schema.json",
     data: [] 
   };
-  let regions = {}; //fsr regions doesn't work like the rest, may be a Manual bug
+  let regions = {
+    "Tablet": {
+      "starting": true,
+      "connects_to": []
+    }
+  };
 
   camp.forEach((bomb, ix) => {
     let bombName = "Bomb " + natoExcel(ix+1);
@@ -205,13 +211,9 @@ function generateManualData(camp, campHash) {
     victory: true
   });
 
-  overall.forEach((bomb, ix) => {
-    let regionInfo = {};
-    if (ix == 0) { regionInfo.starting = true; }
-    if (ix != overall.length - 1) { regionInfo.connects_to = [ overall[ix + 1] ]; }
-    console.log(`regionInfo: ${JSON.stringify(regionInfo)}`);
-    regions[bomb] = regionInfo;
-  });
+  regions["Tablet"]["connects_to"] = overall;
+
+  overall.forEach(bomb => { regions[bomb] = {}; });
 
   return [ game, items, locations, regions ];
 }

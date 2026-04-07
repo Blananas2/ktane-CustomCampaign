@@ -239,7 +239,7 @@
           countsString = countsString.replaceAll(/\s/g, "").split(',');
           countsString.forEach(number => {
             let bomb = [];
-            for (n = 0; n < number; n++) {
+            for (let n = 0; n < number; n++) {
               bomb.push(enabledModules[PRNG(enabledModules.length)]);
             }
             campaign.push(bomb);
