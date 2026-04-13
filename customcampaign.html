@@ -142,13 +142,11 @@
       let request = await fetch("https://ktane.timwi.de/json/raw");
       ktaneJson = JSON.parse(await request.text()).KtaneModules;
 
-      for (let j = 0; j < ktaneJson.length; j++) {
-        if (!(ktaneJson[j].Type === "Regular" || ktaneJson[j].Type === "Needy") || ktaneJson[j].TranslationOf) {
-          continue;
-        } else {
-          ktaneModules.push([ktaneJson[j].ModuleID, ktaneJson[j].FileName ?? ktaneJson[j].Name]);
+      ktaneJson.forEach(entry => {
+        if ((entry.Type === "Regular" || entry.Type === "Needy") && !entry.TranslationOf) {
+          ktaneModules.push([entry.ModuleID, entry.Name]);
         }
-      }
+      });
 
       repoFetched = true;
       document.getElementById("repoWait").remove();
