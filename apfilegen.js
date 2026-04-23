@@ -1,10 +1,9 @@
-function downloadYAML(slotName, campHash) {
-  let desc = `Keep Talking Custom Campaign for ${slotName} generated with hash ${campHash}`;
+function downloadYAML(slotName, campHash, version) {
   let yamlData = [
     `name: ${slotName}`,
     ``,
     `# Used to describe your yaml. Useful if you have multiple files.`,
-    `description: ${desc}`,
+    `description: Keep Talking Custom Campaign for ${slotName} generated with hash ${campHash} on version ${version}`,
     ``,
     `game: Manual_KTCC${campHash}_Blananas2`,
     `requires:`,
@@ -199,7 +198,7 @@ function generateManualData(camp, campHash) {
 
     locations.data.push({
       name: `${bombName} Defused`,
-      category: [`${bombName} Checks`],
+      category: `${bombName} Checks`,
       region: bombName,
       requires: `|@${bombName} Mods:all|`
     });
@@ -213,7 +212,9 @@ function generateManualData(camp, campHash) {
 
   regions["Tablet"]["connects_to"] = overall;
 
-  overall.forEach(bomb => { regions[bomb] = {}; });
+  overall.forEach(bomb => { 
+    regions[bomb] = { requires: `|@${bomb} Mods:all|` }; 
+  });
 
   return [ game, items, locations, regions ];
 }

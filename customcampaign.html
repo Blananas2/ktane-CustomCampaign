@@ -73,6 +73,13 @@
       margin-left: 2em;
       margin-top: -20px;
     }
+
+    .version {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      opacity: 60%;
+    }
   </style>
   <body>
     <div id="restorePreviousSession"></div>
@@ -100,11 +107,13 @@
     <div id="campaign">
       <div id="freeplayArea"></div>
     </div>
+    <p id="version" class="tiny version"></p>
   </body>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src='apfilegen.js'></script>
   <script>
     const urlSearch = new URLSearchParams(window.location.search);
+    const CUSTOM_CAMPAIGN_VERSION = "alfa-0";
 
     const rpsDiv = document.getElementById("restorePreviousSession");
     const appStatus = document.getElementById("appStatus");
@@ -114,6 +123,7 @@
     const setToDateButton = document.getElementById("setToDate");
     const generateCampaignButton = document.getElementById("generateCampaign");
     const campaignDiv = document.getElementById("campaign");
+    const versionNumber = document.getElementById("version");
     //const vanillas = [ "BigButton", "Venn", "Keypad", "Maze", "Memory", "Morse", "Password", "Simon", "WhosOnFirst", "WireSequence", "Wires" ];
     //TODO: vanilla checkbox functionality
 
@@ -135,6 +145,8 @@
 
     modCountField.value = "3, 3, 6, 4, 3, 3, 3, 4, 5, 5, 6, 8"; //Based on first 3 sections in vanilla
     seedValueField.value = RNG(4294967296);
+
+    versionNumber.innerHTML = `version ${CUSTOM_CAMPAIGN_VERSION}`;
 
     fetchRepoData();
 
@@ -221,9 +233,7 @@
     generateCampaignButton.addEventListener("click", (event) => {
       if (jsonValidated && repoFetched) {
         if (generatedPreviously) {
-          if (!window.confirm("Are you sure you want to generate another campaign? The current campaign will be overwritten.")) {
-            return;
-          }
+          if (!window.confirm("Are you sure you want to generate another campaign? The current campaign will be overwritten.")) { return; }
         }
         rpsDiv.innerHTML = "";
 
@@ -429,7 +439,11 @@
       yamlButton.addEventListener("click", () => {
         let slotName = document.getElementById("slotBox").value;
         if (slotName.length == 0) { appStatus.textContent = "Slot name is empty."; return; }
-        downloadYAML(slotName, campaignHash);
+        if (slotName.match(/^\d+$/g)) { 
+          //If this is entirely unsupported by Manual or Archipelago, please do notify me of the source so this can be changed accordingly
+          if (!window.confirm("Slot names which are entirely numbers tend to cause problems. Would you like to continue anyway?")) { return; }
+        }
+        downloadYAML(slotName, campaignHash, CUSTOM_CAMPAIGN_VERSION);
         localStorage.setItem("Downloaded YAML", true);
       });
       yamlButton.innerHTML = "Download YAML";
