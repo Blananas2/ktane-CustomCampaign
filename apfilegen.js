@@ -115,12 +115,13 @@ async function downloadApworld(camp, campHash) {
 }
 
 function generateManualData(camp, campHash) {
+  //TODO: another working manual i'm looking at has categories.json filled, maybe i need that as well? worth a shot..
   let game = {
     "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.game.schema.json",
     "game": `KTCC${campHash}`,
     "creator": "Blananas2",
     "filler_item_name": "Blank Manual Page",
-    "starting_items": [ { "item_categories": ["Bomb Alfa Mods"] } ],
+    "starting_items": [ { "items": [] } ],
     "death_link": false,
     "starting_index": 1
   };
@@ -139,8 +140,9 @@ function generateManualData(camp, campHash) {
     }
   };
 
-  camp.forEach((bomb, ix) => {
-    let bombName = "Bomb " + natoExcel(ix+1);
+  camp.forEach((bomb, bix) => {
+    let bombName = "Bomb " + natoExcel(bix+1);
+    let bombNameNoSpace = bombName.replaceAll(' ', "");
 
     let moduleTotals = {};
     bomb.forEach(module => {
@@ -164,8 +166,8 @@ function generateManualData(camp, campHash) {
         moduleEntry = items.data.find((entry) => entry.name == module);
       }
       
-      if (!moduleEntry.category.includes(`${bombName} Mods`)) {
-        moduleEntry.category.push(`${bombName} Mods`);
+      if (!moduleEntry.category.includes(`${bombNameNoSpace}Mods`)) {
+        moduleEntry.category.push(`${bombNameNoSpace}Mods`);
       }
 
       let locationName = `${bombName} - ${module}`;
@@ -173,47 +175,51 @@ function generateManualData(camp, campHash) {
 
       locations.data.push({
         name: locationName,
-        category: [`${bombName} Checks`],
+        category: [`${bombNameNoSpace}Checks`],
         region: bombName,
-        requires: `|@${bombName} Mods:all|`
+        requires: `|@${bombNameNoSpace}Mods:${bomb.length}|`
       });
+
+      if (bix == 0) { game["starting_items"][0]["items"].push(module); }
     });
     locations.data.push({
       name: `${bombName} Defused`,
-      category: [`${bombName} Checks`],
+      category: [`${bombNameNoSpace}Checks`],
       region: bombName,
-      requires: `|@${bombName} Mods:all|`
+      requires: `|@${bombNameNoSpace}Mods:${bomb.length}|`
     });
   });
 
   freeplay.forEach((bomb, ix) => {
     let bombName = `Freeplay #${ix+1}`;
+    let bombNameNoSpace = bombName.replaceAll(' ', "").replaceAll('#', "");
+
     bomb.forEach(module => {
       let moduleEntry = items.data.find((entry) => entry.name == moduleIdToName(module));
 
       console.log(JSON.stringify(moduleEntry));
-      moduleEntry.category.push(`${bombName} Mods`);
+      moduleEntry.category.push(`${bombNameNoSpace}Mods`);
       console.log(JSON.stringify(moduleEntry));
     });
 
     locations.data.push({
       name: `${bombName} Defused`,
-      category: `${bombName} Checks`,
+      category: `${bombNameNoSpace}Checks`,
       region: bombName,
-      requires: `|@${bombName} Mods:all|`
+      requires: `|@${bombNameNoSpace}Mods:${bomb.length}|`
     });
   });
 
   locations.data.push({
     name: "All Bombs Defused",
-    requires: "|@Module:all|",
+    requires: "|@Module:ALL|", //for the 23456 example, 20 will also work. if shit hits the fan, start here
     victory: true
   });
 
   regions["Tablet"]["connects_to"] = overall;
 
-  overall.forEach(bomb => { 
-    regions[bomb] = { requires: `|@${bomb} Mods:all|` }; 
+  overall.forEach((bomb, bix) => { 
+    regions[bomb] = { requires: `|@${bomb.replaceAll(' ', "")}Mods:${campaign[bix].length}|` }; //FIX: this 'campaign' thing doesn't work w freeplay; i need a new var for this
   });
 
   return [ game, items, locations, regions ];
