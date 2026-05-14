@@ -115,7 +115,6 @@ async function downloadApworld(camp, campHash) {
 }
 
 function generateManualData(camp, campHash) {
-  //TODO: another working manual i'm looking at has categories.json filled, maybe i need that as well? worth a shot..
   let game = {
     "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.game.schema.json",
     "game": `KTCC${campHash}`,
@@ -181,12 +180,8 @@ function generateManualData(camp, campHash) {
 
       if (bix == 0) { game["starting_items"][0]["items"].push(module); }
     });
-    locations.data.push({
-      name: `${bombName} Defused`,
-      category: [`${bombName} Checks`],
-      region: bombName,
-      requires: `|@${bombName} Mods:ALL|`
-    });
+
+    pushLocationDefused(bombName);
   });
 
   freeplay.forEach((bomb, ix) => {
@@ -205,12 +200,7 @@ function generateManualData(camp, campHash) {
       });
     });
 
-    locations.data.push({
-      name: `${bombName} Defused`,
-      category: `${bombName} Checks`,
-      region: bombName,
-      requires: `|@${bombName} Mods:ALL|`
-    });
+    pushLocationDefused(bombName);
   });
 
   locations.data.push({
@@ -231,6 +221,15 @@ function generateManualData(camp, campHash) {
   });
 
   return [ game, items, locations, regions ];
+
+  function pushLocationDefused(bn) {
+    locations.data.push({
+      name: `${bn} Defused`,
+      category: [`${bn} Checks`],
+      region: bn,
+      requires: `|@${bn} Mods:ALL|`
+    });
+  }
 }
 
 function downloadFile(filename, content, mimeType) {

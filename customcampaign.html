@@ -112,8 +112,8 @@
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src='apfilegen.js'></script>
   <script>
-    const urlSearch = new URLSearchParams(window.location.search);
-    const CUSTOM_CAMPAIGN_VERSION = "alfa-2";
+    const urlSearch = new URLSearchParams(window.location.search); //replace this jank with an AP checkbox honestly
+    const CUSTOM_CAMPAIGN_VERSION = "alfa-3";
 
     const rpsDiv = document.getElementById("restorePreviousSession");
     const appStatus = document.getElementById("appStatus");
@@ -123,6 +123,7 @@
     const setToDateButton = document.getElementById("setToDate");
     const generateCampaignButton = document.getElementById("generateCampaign");
     const campaignDiv = document.getElementById("campaign");
+    const freeplayDiv = document.getElementById("freeplayArea");
     const versionNumber = document.getElementById("version");
     //const vanillas = [ "BigButton", "Venn", "Keypad", "Maze", "Memory", "Morse", "Password", "Simon", "WhosOnFirst", "WireSequence", "Wires" ];
     //TODO: vanilla checkbox functionality
@@ -139,7 +140,7 @@
     let freeplay;
     let overall;
     let generatedPreviously = false;
-    let dmgStrings;
+    let dmgStrings = [[], []];
     let bombDivs;
     let furthestBomb;
 
@@ -181,6 +182,7 @@
       modCountField.value = localStorage.getItem("Module counts");
       seedValueField.value = localStorage.getItem("Seed value");
       campaign = JSON.parse(localStorage.getItem("Generated campaign"));
+      freeplay = JSON.parse(localStorage.getItem("Generated freeplay"));
       furthestBomb = localStorage.getItem("Furthest bomb");
 
       createDMGStrings();
@@ -324,16 +326,25 @@
     }
 
     function createDMGStrings() {
-      dmgStrings = [];
+      dmgStrings = [[], []];
       campaign.forEach(bomb => {
         let dmgString = `mode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
         dmgString += bomb.join("\n");
-        dmgStrings.push(dmgString);
+        dmgStrings[0].push(dmgString);
       });
+      if (freeplay != undefined) {
+        freeplay.forEach(bomb => {
+          let dmgString = `mode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
+          dmgString += bomb.join("\n");
+          dmgStrings[1].push(dmgString);
+        });
+      }
     }
 
     function visualizeCampaign(restored) {
       campaignDiv.innerHTML = "";
+
+      //when freeplays get visualized, ensure to: 1) add the div with the freeplayArea id, 2) make sure the freeplayDiv is that div
 
       bombDivs = [];
       let bombCount = 1;
@@ -344,7 +355,7 @@
         let bombTitle = document.createElement("p");
         bombDiv.classList.add("bomb");
         
-        bombTitle.textContent = `Mission ${natoExcel(bombCount++)}`;
+        bombTitle.textContent = `Bomb ${natoExcel(bombCount++)}`;
         bombTitle.classList.add("bombTitle");
         bombDiv.appendChild(bombTitle);
 
@@ -353,7 +364,7 @@
         let dmgButton = document.createElement("button");
         dmgButton.classList.add("dmgButton");
         dmgButton.addEventListener("click", () => {
-          writeClipboardText(dmgStrings[currentTotal]);
+          writeClipboardText(dmgStrings[0][currentTotal]);
         });
         dmgButton.innerText = "Copy DMG String";
         bombDiv.appendChild(dmgButton);
@@ -402,6 +413,13 @@
         }
       });
 
+      //i'll have to refactor stuff to not have repeating code for campaign and freeplay
+      /*
+      freeplay.forEach(bomb => {
+
+      })
+      */
+
       if (!restored) { localStorage.setItem("Furthest bomb", apFlag ? -1 : 1); }
     }
 
@@ -411,6 +429,7 @@
       localStorage.setItem("Module counts", modCountField.value);
       localStorage.setItem("Seed value", seedValueField.value);
       localStorage.setItem("Generated campaign", JSON.stringify(campaign));
+      localStorage.setItem("Generated freeplay", JSON.stringify(freeplay));
     }
 
     function doAPStuffs() {
@@ -440,7 +459,7 @@
         let slotName = document.getElementById("slotBox").value;
         if (slotName.length == 0) { appStatus.textContent = "Slot name is empty."; return; }
         if (slotName.match(/^\d+$/g)) { 
-          //If this is entirely unsupported by Manual or Archipelago, please do notify me of the source so this can be changed accordingly
+          //If you know more about how this is supported by Manual or Archipelago, please do notify me of the source so this can be changed accordingly
           if (!window.confirm("Slot names which are entirely numbers tend to cause problems. Would you like to continue anyway?")) { return; }
         }
         downloadYAML(slotName, campaignHash, CUSTOM_CAMPAIGN_VERSION);
