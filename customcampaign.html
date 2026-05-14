@@ -113,7 +113,7 @@
   <script src='apfilegen.js'></script>
   <script>
     const urlSearch = new URLSearchParams(window.location.search);
-    const CUSTOM_CAMPAIGN_VERSION = "alfa-1";
+    const CUSTOM_CAMPAIGN_VERSION = "alfa-2";
 
     const rpsDiv = document.getElementById("restorePreviousSession");
     const appStatus = document.getElementById("appStatus");
@@ -155,7 +155,7 @@
       ktaneJson = JSON.parse(await request.text()).KtaneModules;
 
       ktaneJson.forEach(entry => {
-        if ((entry.Type === "Regular" || entry.Type === "Needy") && !entry.TranslationOf) {
+        if ((entry.Type === "Regular" || entry.Type === "Needy")) {
           ktaneModules.push([entry.ModuleID, entry.Name]);
         }
       });

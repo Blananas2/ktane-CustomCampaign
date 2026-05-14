@@ -142,7 +142,6 @@ function generateManualData(camp, campHash) {
 
   camp.forEach((bomb, bix) => {
     let bombName = "Bomb " + natoExcel(bix+1);
-    let bombNameNoSpace = bombName.replaceAll(' ', "");
 
     let moduleTotals = {};
     bomb.forEach(module => {
@@ -166,8 +165,8 @@ function generateManualData(camp, campHash) {
         moduleEntry = items.data.find((entry) => entry.name == module);
       }
       
-      if (!moduleEntry.category.includes(`${bombNameNoSpace}Mods`)) {
-        moduleEntry.category.push(`${bombNameNoSpace}Mods`);
+      if (!moduleEntry.category.includes(`${bombName} Mods`)) {
+        moduleEntry.category.push(`${bombName} Mods`);
       }
 
       let locationName = `${bombName} - ${module}`;
@@ -175,51 +174,60 @@ function generateManualData(camp, campHash) {
 
       locations.data.push({
         name: locationName,
-        category: [`${bombNameNoSpace}Checks`],
+        category: [`${bombName} Checks`],
         region: bombName,
-        requires: `|@${bombNameNoSpace}Mods:${bomb.length}|`
+        requires: `|@${bombName} Mods:ALL|`
       });
 
       if (bix == 0) { game["starting_items"][0]["items"].push(module); }
     });
     locations.data.push({
       name: `${bombName} Defused`,
-      category: [`${bombNameNoSpace}Checks`],
+      category: [`${bombName} Checks`],
       region: bombName,
-      requires: `|@${bombNameNoSpace}Mods:${bomb.length}|`
+      requires: `|@${bombName} Mods:ALL|`
     });
   });
 
   freeplay.forEach((bomb, ix) => {
     let bombName = `Freeplay #${ix+1}`;
-    let bombNameNoSpace = bombName.replaceAll(' ', "").replaceAll('#', "");
 
     bomb.forEach(module => {
-      let moduleEntry = items.data.find((entry) => entry.name == moduleIdToName(module));
+      moduleName = moduleIdToName(module);
+      let moduleEntry = items.data.find((entry) => entry.name == moduleName);
+      moduleEntry.category.push(`${bombName} Mods`);
 
-      console.log(JSON.stringify(moduleEntry));
-      moduleEntry.category.push(`${bombNameNoSpace}Mods`);
-      console.log(JSON.stringify(moduleEntry));
+      locations.data.push({
+        name: `${bombName} - ${moduleName}`,
+        category: [`${bombName} Checks`],
+        region: bombName,
+        requires: `|@${bombName} Mods:ALL|`
+      });
     });
 
     locations.data.push({
       name: `${bombName} Defused`,
-      category: `${bombNameNoSpace}Checks`,
+      category: `${bombName} Checks`,
       region: bombName,
-      requires: `|@${bombNameNoSpace}Mods:${bomb.length}|`
+      requires: `|@${bombName} Mods:ALL|`
     });
   });
 
   locations.data.push({
     name: "All Bombs Defused",
-    requires: "|@Module:ALL|", //for the 23456 example, 20 will also work. if shit hits the fan, start here
+    requires: "|@Module:ALL|",
     victory: true
   });
 
-  regions["Tablet"]["connects_to"] = overall;
-
   overall.forEach((bomb, bix) => { 
-    regions[bomb] = { requires: `|@${bomb.replaceAll(' ', "")}Mods:${campaign[bix].length}|` }; //FIX: this 'campaign' thing doesn't work w freeplay; i need a new var for this
+    if (bix == 0) { regions["Tablet"]["connects_to"].push(bomb); }
+      
+    regions[bomb] = {
+      "connects_to": [],
+      "requires": `|@${bomb} Mods:ALL|`
+    };
+
+    if (bix != overall.length - 1) { regions[bomb]["connects_to"].push(overall[bix + 1]); }
   });
 
   return [ game, items, locations, regions ];
