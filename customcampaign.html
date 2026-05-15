@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <!-- <link rel="icon" href="img/favicon.ico" /> -->
+    <link rel="icon" href="/favicon.ico" />
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
     <title>KTANE Custom Campaign</title>
@@ -33,6 +33,8 @@
       cursor: help;
     }
 
+    button { font-family: 'Inter', Verdana, sans-serif }
+
     input#moduleCounts { width: 500px; }
 
     tr { 
@@ -59,6 +61,7 @@
       margin: 1em;
       margin-left: 3em;
     }
+    button#generateCampaign { font-size: 24px; }
 
     ul { 
       margin: 12px;
@@ -79,6 +82,12 @@
       bottom: 16px;
       right: 16px;
       opacity: 60%;
+    }
+
+    div.apCheck {
+      position: fixed;
+      top: 0px;
+      right: 16px;
     }
   </style>
   <body>
@@ -107,15 +116,16 @@
     <div id="campaign">
       <div id="freeplayArea"></div>
     </div>
-    <p id="version" class="tiny version"></p>
+    <div class="apCheck"> <p>Archipelago Mode</p> <input onclick="apSet()" type="checkbox" class="checkbox" id="apCheckbox" style="margin-left: 6em;"></div>
+    <p id="version" class="tiny version">version name-0</p>
   </body>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src='apfilegen.js'></script>
   <script>
-    const urlSearch = new URLSearchParams(window.location.search); //replace this jank with an AP checkbox honestly
-    const CUSTOM_CAMPAIGN_VERSION = "alfa-3";
+    const CUSTOM_CAMPAIGN_VERSION = "alfa-4";
 
     const rpsDiv = document.getElementById("restorePreviousSession");
+    const apCheckbox = document.getElementById("apCheckbox");
     const appStatus = document.getElementById("appStatus");
     const modCountField = document.getElementById("moduleCounts");
     const seedValueField = document.getElementById("seedValue");
@@ -129,20 +139,21 @@
     //TODO: vanilla checkbox functionality
 
     const NATO = [ "Alfa", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliett", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu" ];
-    let mode = urlSearch.get("m") ?? "casual";
-    let apFlag = mode == "archipelago";
+    let apMode = apCheckbox.checked;
     let jsonValidated = false;
     let repoFetched = false;
     let ktaneJson;
     let ktaneModules = [];
     let enabledModules;
     let campaign;
-    let freeplay;
+    let freeplay = null;
     let overall;
     let generatedPreviously = false;
     let dmgStrings = [[], []];
     let bombDivs;
     let furthestBomb;
+
+    function apSet() { apMode = apCheckbox.checked; }
 
     modCountField.value = "3, 3, 6, 4, 3, 3, 3, 4, 5, 5, 6, 8"; //Based on first 3 sections in vanilla
     seedValueField.value = RNG(4294967296);
@@ -171,20 +182,23 @@
         let rpsButton = document.createElement("button");
         rpsButton.addEventListener("click", (event) => { retrieveLocalStorage(); });
         rpsButton.innerText = "Restore Previous Session";
+        rpsButton.style = "font-size: 36px;";
         rpsDiv.appendChild(rpsButton);
         appStatus.textContent = "Click the above button to restore previous session info.";
       }
     }
 
     function retrieveLocalStorage() {
-      mode = localStorage.getItem("Mode");
+      apMode = localStorage.getItem("Archipelago mode") == "true";
       enabledModules = JSON.parse(localStorage.getItem("Profile-enabled modules"))
       modCountField.value = localStorage.getItem("Module counts");
       seedValueField.value = localStorage.getItem("Seed value");
       campaign = JSON.parse(localStorage.getItem("Generated campaign"));
-      freeplay = JSON.parse(localStorage.getItem("Generated freeplay"));
+      try { freeplay = JSON.parse(localStorage.getItem("Generated freeplay"));
+      } catch { freeplay = null; }
       furthestBomb = localStorage.getItem("Furthest bomb");
 
+      apCheckbox.checked = apMode;
       createDMGStrings();
       visualizeCampaign(true);
       appStatus.textContent = `Restored campaign from profile with ${enabledModules.length} enabled modules.`;
@@ -254,7 +268,7 @@
             }
             campaign.push(bomb);
           });
-          if (apFlag) { 
+          if (apMode) { 
             if (campaign.length == 1) {
               appStatus.textContent = "Campaign should have at least 2 bombs.";
               return;
@@ -264,7 +278,7 @@
           createDMGStrings();
           visualizeCampaign(false);
           bulkSetLocalStorage();
-          if (apFlag) { doAPStuffs(); }
+          if (apMode) { doAPStuffs(); }
           generatedPreviously = true;
         } else { appStatus.textContent = "Can't parse the module counts."; }
       } else { appStatus.textContent = "Can't generate without a KTANE profile."; }
@@ -369,7 +383,7 @@
         dmgButton.innerText = "Copy DMG String";
         bombDiv.appendChild(dmgButton);
 
-        if (!apFlag) {
+        if (!apMode) {
           bomb.forEach(module => {
             let moduleName = moduleIdToName(module);
             let moduleLi = document.createElement("li");
@@ -388,7 +402,7 @@
                 campaignDiv.appendChild(bombDivs[currentTotal + 1]);
                 localStorage.setItem("Furthest bomb", currentTotal + 2);
               } 
-            } catch (error) {
+            } catch {
               document.body.style.backgroundColor = "#1A411A";
               appStatus.textContent = "Congratulations! Press the button above to clear the session from memory.";
               let clearButton = document.createElement("button");
@@ -397,6 +411,7 @@
                 rpsDiv.innerHTML = "";
                 campaignDiv.innerHTML = "";
                 document.body.style.backgroundColor = "#411A1A";
+                appStatus.textContent = "Previous session cleared.";
               });
               clearButton.innerText = "Clear session";
               rpsDiv.appendChild(clearButton);
@@ -407,9 +422,9 @@
 
         bombDivs.push(bombDiv);
         if (restored) {
-          if (((currentTotal + 1) <= furthestBomb) || apFlag) { campaignDiv.appendChild(bombDiv); }
+          if (((currentTotal + 1) <= furthestBomb) || apMode) { campaignDiv.appendChild(bombDiv); }
         } else {
-          if (apFlag || (currentTotal + 1) == 1) { campaignDiv.appendChild(bombDiv); }
+          if (apMode || (currentTotal + 1) == 1) { campaignDiv.appendChild(bombDiv); }
         }
       });
 
@@ -420,11 +435,11 @@
       })
       */
 
-      if (!restored) { localStorage.setItem("Furthest bomb", apFlag ? -1 : 1); }
+      if (!restored) { localStorage.setItem("Furthest bomb", apMode ? -1 : 1); }
     }
 
     function bulkSetLocalStorage() {
-      localStorage.setItem("Mode", mode);
+      localStorage.setItem("Archipelago mode", apMode);
       localStorage.setItem("Profile-enabled modules", JSON.stringify(enabledModules));
       localStorage.setItem("Module counts", modCountField.value);
       localStorage.setItem("Seed value", seedValueField.value);
