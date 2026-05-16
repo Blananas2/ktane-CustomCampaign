@@ -19,10 +19,14 @@
       margin-right: 160px;
     }
 
+    table { table-layout: fixed; }
+
     p, ul {
       font-family: 'Inter', Arial, sans-serif;
       color: white;
     }
+
+    ul { font-size: 20px; }
 
     p.tiny { 
       font-size: 16px;
@@ -35,14 +39,21 @@
 
     button { font-family: 'Inter', Verdana, sans-serif }
 
-    input#moduleCounts { width: 500px; }
+    input#moduleCounts { width: 492px; }
+    p#bombTotal {
+      overflow: visible;
+      white-space: nowrap;
+    }
 
     tr { 
       height: 28px; 
       margin-top: 0px;
     }
-    td { width: 500px; }
-    th { width: 125px; }
+    td { max-width: 500px; }
+    th { 
+      width: 125px; 
+      max-width: 125px; 
+    }
 
     div.bomb {
       border-style: solid;
@@ -57,16 +68,23 @@
       margin-bottom: -6px;
     }
 
+    p.freeplayNote { 
+      margin-top: 8px;
+      margin-left: 16px; 
+      margin-bottom: 8px;
+    }
+
     button.dmgButton { 
       margin: 1em;
-      margin-left: 3em;
+      margin-left: 1.1em;
     }
+    
     button#generateCampaign { font-size: 24px; }
 
     ul { 
       margin: 12px;
-      margin-bottom: 30px;
       margin-top: 0px;
+      margin-bottom: 30px;
     }
 
     input.checkbox {
@@ -97,14 +115,13 @@
     <table>
         <tr>
           <th><p class="tiny explain" title="The file containing information on which modules you're familiar with.&#xa;All modules chosen for the campaign will come from enabled modules in your profile.">KTANE Profile</p></th>
-          <td style="background-color: #999999;"><input type="file" accept="application/json" id="fileInput"/></td>
-          <!-- <th><p class="tiny" title="Check this box to include vanilla modules.">Add vanillas?</p></th>
-          <td><input id="addVanillas" type="checkbox"></td> -->
+          <td style="background-color: #999999;"><input type="file" accept="application/json" id="profileInput"/></td>
+          <th><p class="tiny explain" title="Check this box to include vanilla modules.">Add vanillas?</p></th>
+          <td><input onchange="vanillasToggle()" id="vanillasCheck" type="checkbox" disabled unchecked></td>
         </tr>
         <tr>
           <th><p class="tiny explain" title="Comma separated numbers that dictate the number of modules per bomb.&#xa;Any sequence of non-negative numbers is valid.">Module Counts</p></th>
-          <td><input id="moduleCounts" type="text"></td>
-          <td><p id="bombTotal" class="tiny">(12 bombs, 53 modules total)</p></td>
+          <td><input id="moduleCounts" type="text"><p id="bombTotal" class="tiny">(12 bombs, 53 modules total)</p></td>
         </tr>
         <tr>
           <th><p class="tiny explain" title="The number used to 'randomly' generate your campaign.&#xa;So long as you ensure the all parameters match, not just the seed, the generated campaign will be the same.">Seed Value</p></th>
@@ -113,38 +130,37 @@
     </table>
     <button id="generateCampaign">Generate Campaign</button>
     <div id="apStuffs"></div>
-    <div id="campaign">
-      <div id="freeplayArea"></div>
-    </div>
-    <div class="apCheck"> <p>Archipelago Mode</p> <input onclick="apSet()" type="checkbox" class="checkbox" id="apCheckbox" style="margin-left: 6em;"></div>
+    <div id="campaign"></div>
+    <div class="apCheck"> <p>Archipelago Mode</p> <input onclick="apToggle()" type="checkbox" class="checkbox" id="apCheckbox" style="margin-left: 6em;"></div>
     <p id="version" class="tiny version">version name-0</p>
   </body>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src='apfilegen.js'></script>
   <script>
-    const CUSTOM_CAMPAIGN_VERSION = "alfa-4";
+    const CUSTOM_CAMPAIGN_VERSION = "alfa-5";
 
     const rpsDiv = document.getElementById("restorePreviousSession");
     const apCheckbox = document.getElementById("apCheckbox");
     const appStatus = document.getElementById("appStatus");
+    const profileInput = document.getElementById("profileInput");
+    const vanillaCheckbox = document.getElementById("vanillasCheck");
     const modCountField = document.getElementById("moduleCounts");
     const seedValueField = document.getElementById("seedValue");
     const randomButton = document.getElementById("random");
     const setToDateButton = document.getElementById("setToDate");
     const generateCampaignButton = document.getElementById("generateCampaign");
     const campaignDiv = document.getElementById("campaign");
-    const freeplayDiv = document.getElementById("freeplayArea");
     const versionNumber = document.getElementById("version");
-    //const vanillas = [ "BigButton", "Venn", "Keypad", "Maze", "Memory", "Morse", "Password", "Simon", "WhosOnFirst", "WireSequence", "Wires" ];
-    //TODO: vanilla checkbox functionality
 
     const NATO = [ "Alfa", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliett", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu" ];
     let apMode = apCheckbox.checked;
-    let jsonValidated = false;
     let repoFetched = false;
     let ktaneJson;
     let ktaneModules = [];
-    let enabledModules;
+    let jsonValidated = false;
+    let profileModules;
+    let vanillasRequested = false;
+
     let campaign;
     let freeplay = null;
     let overall;
@@ -153,7 +169,22 @@
     let bombDivs;
     let furthestBomb;
 
-    function apSet() { apMode = apCheckbox.checked; }
+    window.addEventListener("pageshow", () => {
+      profileInput.value = "";
+      vanillaCheckbox.disabled = true;
+      vanillaCheckbox.checked = false;
+    });
+
+    function apToggle() { apMode = apCheckbox.checked; }
+    function vanillasToggle() { 
+      vanillasRequested = vanillaCheckbox.checked; 
+      if (vanillasRequested) {
+        profileModules.push("BigButton", "Venn", "Keypad", "Maze", "Memory", "Morse", "Password", "Simon", "WhosOnFirst", "WireSequence", "Wires");
+      } else {
+        profileModules.splice(profileModules.length - 11, 11);
+      }
+      appStatus.textContent = `Profile contains ${profileModules.length} enabled modules.`;
+    }
 
     modCountField.value = "3, 3, 6, 4, 3, 3, 3, 4, 5, 5, 6, 8"; //Based on first 3 sections in vanilla
     seedValueField.value = RNG(4294967296);
@@ -190,7 +221,7 @@
 
     function retrieveLocalStorage() {
       apMode = localStorage.getItem("Archipelago mode") == "true";
-      enabledModules = JSON.parse(localStorage.getItem("Profile-enabled modules"))
+      profileModules = JSON.parse(localStorage.getItem("Profile-enabled modules"))
       modCountField.value = localStorage.getItem("Module counts");
       seedValueField.value = localStorage.getItem("Seed value");
       campaign = JSON.parse(localStorage.getItem("Generated campaign"));
@@ -198,14 +229,19 @@
       } catch { freeplay = null; }
       furthestBomb = localStorage.getItem("Furthest bomb");
 
+      vanillaCheckbox.disabled = false;
+      if (profileModules.includes("Venn")) { 
+        vanillaCheckbox.checked = true;
+        vanillasRequested = true;
+      }
       apCheckbox.checked = apMode;
       createDMGStrings();
       visualizeCampaign(true);
-      appStatus.textContent = `Restored campaign from profile with ${enabledModules.length} enabled modules.`;
+      appStatus.textContent = `Restored campaign from profile with ${profileModules.length} enabled modules.`;
       rpsDiv.innerHTML = "";
     }
 
-    document.getElementById("fileInput").addEventListener("change", (event) => {
+    profileInput.addEventListener("change", (event) => {
       const file = event.target.files[0];
 
       if (!file) return;
@@ -223,17 +259,21 @@
 
     function checkJson(file) {
       if (Object.hasOwn(file, "Operation") && Object.hasOwn(file, "EnabledList")) {
-        enabledModules = file.EnabledList;
-        appStatus.textContent = `Profile contains ${enabledModules.length} enabled modules.`;
-        jsonValidated = true;
+        profileModules = file.EnabledList;
+        appStatus.textContent = `Profile contains ${profileModules.length} enabled modules.`;
+        jsonValidated = profileModules.length > 0;
+        vanillaCheckbox.disabled = false;
+      } else if (Object.hasOwn(file, "Operation") && Object.hasOwn(file, "DisabledList")) {
+        appStatus.textContent = "Your profile needs to be an Expert profile.";
+        jsonValidated = false;
       } else {
-        appStatus.textContent = "That does not look like a KTANE profile.";
+        appStatus.textContent = "JSON file does not look like a KTANE profile.";
         jsonValidated = false;
       }
     }
 
     modCountField.addEventListener("input", (event) => {
-      let moduleTotal = sum(modCountField.value.replaceAll(/\s/g, "").split(',').map((v) => Number.parseInt(v)));
+      let moduleTotal = sum(modCountField.value.replaceAll(/\s/g, "").split(',').map((v) => isNaN(Number.parseInt(v)) ? 0 : Number.parseInt(v)));
       document.getElementById("bombTotal").innerText = `(${modCountField.value.split(',').length} bombs, ${moduleTotal} modules total)`;
     });
 
@@ -260,16 +300,18 @@
           let seed = stringToSeed(seedValueField.value);
           let PRNG = mulberry32(seed);
 
+          let actualBombs = 0;
           countsString = countsString.replaceAll(/\s/g, "").split(',');
           countsString.forEach(number => {
             let bomb = [];
             for (let n = 0; n < number; n++) {
-              bomb.push(enabledModules[PRNG(enabledModules.length)]);
+              bomb.push(profileModules[PRNG(profileModules.length)]);
             }
             campaign.push(bomb);
+            if (number > 0) { actualBombs++ }
           });
           if (apMode) { 
-            if (campaign.length == 1) {
+            if (actualBombs < 2) {
               appStatus.textContent = "Campaign should have at least 2 bombs.";
               return;
             }
@@ -324,6 +366,8 @@
     }
 
     function findFreeplayNumbers(start, desired) {
+      /* SIDENOTE: This function is not perfect, as (3 9) can become (3 <4> 9) as 3 sends 4 and <4> sends 5 which is enough for 9.
+      The current function does not calculate this better solution. Would likely require a complete rewrite, but it works for now. */
       let seq = [start];
       let total = start;
       let curNum = start + 1;
@@ -340,6 +384,7 @@
     }
 
     function createDMGStrings() {
+      //TODO: Include the name of the mission at the top of the string
       dmgStrings = [[], []];
       campaign.forEach(bomb => {
         let dmgString = `mode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
@@ -358,7 +403,73 @@
     function visualizeCampaign(restored) {
       campaignDiv.innerHTML = "";
 
-      //when freeplays get visualized, ensure to: 1) add the div with the freeplayArea id, 2) make sure the freeplayDiv is that div
+      let currentFp = 0;
+
+      if (apMode && freeplay.length != 0) {
+        let bombDiv = document.createElement("div");
+        bombDiv.classList.add("bomb");
+
+        let bombTitle = document.createElement("p");
+        bombTitle.textContent = "Freeplay #1";
+        bombTitle.classList.add("bombTitle");
+        bombDiv.appendChild(bombTitle);
+
+        let prevButton = document.createElement("button");
+        prevButton.classList.add("dmgButton");
+        prevButton.innerText = "Prev.";
+        bombDiv.appendChild(prevButton);
+        let nextButton = document.createElement("button");
+        nextButton.classList.add("dmgButton");
+        nextButton.innerText = "Next";
+        bombDiv.appendChild(nextButton);
+
+        let fpNote = document.createElement("p");
+        fpNote.textContent = "You can only access this bomb if all modules below are unlocked:";
+        fpNote.classList.add("tiny", "freeplayNote");
+        bombDiv.appendChild(fpNote);
+
+        let listUl = document.createElement("ul");
+        listUl.id = "freeplayList";
+        populateFreeplayList(listUl, 0);
+        bombDiv.appendChild(listUl);
+
+        prevButton.addEventListener("click", () => {
+          let ul = document.getElementById("freeplayList");
+          if (currentFp != 0) {
+            currentFp--;
+            bombTitle.textContent = `Freeplay #${currentFp + 1}`;
+            ul.innerHTML = "";
+            populateFreeplayList(ul, currentFp);
+          }
+        });
+        nextButton.addEventListener("click", () => {
+          let ul = document.getElementById("freeplayList");
+          if (currentFp != freeplay.length - 1) {
+            currentFp++;
+            bombTitle.textContent = `Freeplay #${currentFp + 1}`;
+            ul.innerHTML = "";
+            populateFreeplayList(ul, currentFp);
+          }
+        });
+
+        let dmgButton = document.createElement("button");
+        dmgButton.classList.add("dmgButton");
+        dmgButton.addEventListener("click", () => {
+          writeClipboardText(dmgStrings[1][currentFp]);
+        });
+        dmgButton.innerText = "Copy DMG String";
+        bombDiv.appendChild(dmgButton);
+
+        campaignDiv.appendChild(bombDiv);
+      }
+
+      function populateFreeplayList(u, n) {
+        freeplay[n].forEach(module => {
+          let moduleLi = document.createElement("li");
+          moduleLi.textContent = moduleIdToName(module);
+          u.appendChild(moduleLi);
+        });
+      }
 
       bombDivs = [];
       let bombCount = 1;
@@ -428,19 +539,12 @@
         }
       });
 
-      //i'll have to refactor stuff to not have repeating code for campaign and freeplay
-      /*
-      freeplay.forEach(bomb => {
-
-      })
-      */
-
       if (!restored) { localStorage.setItem("Furthest bomb", apMode ? -1 : 1); }
     }
 
     function bulkSetLocalStorage() {
       localStorage.setItem("Archipelago mode", apMode);
-      localStorage.setItem("Profile-enabled modules", JSON.stringify(enabledModules));
+      localStorage.setItem("Profile-enabled modules", JSON.stringify(profileModules));
       localStorage.setItem("Module counts", modCountField.value);
       localStorage.setItem("Seed value", seedValueField.value);
       localStorage.setItem("Generated campaign", JSON.stringify(campaign));
