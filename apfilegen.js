@@ -1,15 +1,15 @@
-function downloadYAML(slotName, campHash, version) {
+function downloadYAML(slotName, dlink, campHash, version) {
   let yamlData = [
     `name: ${slotName}`,
     ``,
     `# Used to describe your yaml. Useful if you have multiple files.`,
     `description: Keep Talking Custom Campaign for ${slotName} generated with hash ${campHash} on version ${version}`,
     ``,
-    `game: Manual_KTCC${campHash}_Blananas2`,
+    `game: Manual_KTCC${campHash}_Blan`,
     `requires:`,
     `  version: 0.6.6 # Version of Archipelago required for this yaml to work as expected.`,
     ``,
-    `Manual_KTCC${campHash}_Blananas2:`,
+    `Manual_KTCC${campHash}_Blan:`,
     `  ################`,
     `  # Game Options #`,
     `  ################`,
@@ -28,6 +28,8 @@ function downloadYAML(slotName, campHash, version) {
     `    disabled: 0 # equivalent to 0`,
     `    normal: 50 # equivalent to 50`,
     `    extreme: 0 # equivalent to 99`,
+    ``,
+    `  # Death Link is disabled #`,
     ``,
     `  accessibility:`,
     `    # Set rules for reachability of your items/locations.`,
@@ -83,15 +85,26 @@ function downloadYAML(slotName, campHash, version) {
     `    # Generic items plando.`,
     `    []`
   ].join('\n');
+  if (dlink) {
+    yamlData = yamlData.replace(
+      "# Death Link is disabled #", 
+    [ 
+      `  death_link:`,
+      `    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.`,
+      `    'false': 0`,
+      `    'true': 50`,
+    ].join('\n')
+    );
+  }
   let yamlFile = new File([yamlData], `${slotName}.yaml`, { type: "application/yaml" });
 
   downloadFile(`${slotName}.yaml`, yamlFile, yamlFile.type);
 }
 
-async function downloadApworld(camp, campHash) {
+async function downloadApworld(dlink, camp, campHash) {
   const zip = new JSZip();
 
-  let worldData = generateManualData(camp, campHash);
+  let worldData = generateManualData(dlink, camp, campHash);
   
   const manifest = await fetch("manifest.json").then(r => r.json());
 
@@ -100,28 +113,28 @@ async function downloadApworld(camp, campHash) {
       const res = await fetch(`Manual_KTCC_Blan/${fileName}`);
       const content = await res.text();
 
-      zip.file(`Manual_KTCC${campHash}_Blananas2/${fileName}`, content);
+      zip.file(`Manual_KTCC${campHash}_Blan/${fileName}`, content);
     })
   );
   
   let worldFiles = [ "game", "items", "locations", "regions" ];
 
   for (let f = 0; f < worldFiles.length; f++) {
-    zip.file(`Manual_KTCC${campHash}_Blananas2/data/${worldFiles[f]}.json`, JSON.stringify(worldData[f], null, 4));
+    zip.file(`Manual_KTCC${campHash}_Blan/data/${worldFiles[f]}.json`, JSON.stringify(worldData[f], null, 4));
   }
 
   let apworldBlob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
-  downloadFile(`Manual_KTCC${campHash}_Blananas2.apworld`, apworldBlob, "application/zip");
+  downloadFile(`Manual_KTCC${campHash}_Blan.apworld`, apworldBlob, "application/zip");
 }
 
-function generateManualData(camp, campHash) {
+function generateManualData(dlink, camp, campHash) {
   let game = {
     "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.game.schema.json",
     "game": `KTCC${campHash}`,
-    "creator": "Blananas2",
+    "creator": "Blan",
     "filler_item_name": "Blank Manual Page",
     "starting_items": [ { "items": [] } ],
-    "death_link": false,
+    "death_link": dlink,
     "starting_index": 1
   };
   let items = { 
@@ -205,6 +218,7 @@ function generateManualData(camp, campHash) {
 
   locations.data.push({
     name: "All Bombs Defused",
+    category: "Victory",
     requires: "|@Module:ALL|",
     victory: true
   });

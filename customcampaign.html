@@ -19,32 +19,28 @@
       margin-right: 160px;
     }
 
-    table { table-layout: fixed; }
-
-    p, ul {
+    p, ul, a {
       font-family: 'Inter', Arial, sans-serif;
       color: white;
     }
 
-    ul { font-size: 20px; }
-
-    p.tiny { 
-      font-size: 16px;
-      margin: 0px;
-    }
-    p.explain { 
-      border-bottom: dashed 1px; 
-      cursor: help;
+    div.apCheck {
+      position: fixed;
+      top: 0px;
+      right: 16px;
     }
 
-    button { font-family: 'Inter', Verdana, sans-serif }
-
-    input#moduleCounts { width: 492px; }
-    p#bombTotal {
-      overflow: visible;
-      white-space: nowrap;
+    .version, .infoDoc {
+      position: fixed;
+      bottom: 16px;
+      opacity: 60%;
     }
 
+    .version { right: 16px; }
+    .infoDoc { left: 16px; }
+
+    table { table-layout: fixed; }
+    
     tr { 
       height: 28px; 
       margin-top: 0px;
@@ -53,6 +49,32 @@
     th { 
       width: 125px; 
       max-width: 125px; 
+    }
+
+    p.tiny, a.tiny { 
+      font-size: 16px;
+      margin: 0px;
+    }
+    p.explain { 
+      border-bottom: dashed 1px; 
+      cursor: help;
+    }
+
+    input#moduleCounts { width: 492px; }
+
+    input.checkbox {
+      width: 3em;
+      height: 3em;
+      margin: 1em;
+      margin-left: 2em;
+      margin-top: -20px;
+    }
+
+    button { font-family: 'Inter', Verdana, sans-serif }
+
+    p#bombTotal {
+      overflow: visible;
+      white-space: nowrap;
     }
 
     div.bomb {
@@ -73,39 +95,22 @@
       margin-left: 16px; 
       margin-bottom: 8px;
     }
+    
+    ul { 
+      font-size: 20px; 
+      margin: 12px;
+      margin-top: 0px;
+      margin-bottom: 30px;
+    }
 
     button.dmgButton { 
       margin: 1em;
       margin-left: 1.1em;
     }
     
-    button#generateCampaign { font-size: 24px; }
-
-    ul { 
-      margin: 12px;
-      margin-top: 0px;
-      margin-bottom: 30px;
-    }
-
-    input.checkbox {
-      width: 3em;
-      height: 3em;
-      margin: 1em;
-      margin-left: 2em;
-      margin-top: -20px;
-    }
-
-    .version {
-      position: fixed;
-      bottom: 16px;
-      right: 16px;
-      opacity: 60%;
-    }
-
-    div.apCheck {
-      position: fixed;
-      top: 0px;
-      right: 16px;
+    button.big { 
+      margin-top: 12px;
+      font-size: 24px; 
     }
   </style>
   <body>
@@ -118,6 +123,10 @@
           <td style="background-color: #999999;"><input type="file" accept="application/json" id="profileInput"/></td>
           <th><p class="tiny explain" title="Check this box to include vanilla modules.">Add vanillas?</p></th>
           <td><input onchange="vanillasToggle()" id="vanillasCheck" type="checkbox" disabled unchecked></td>
+          <!--
+          <th><p class="tiny explain" title="Check this box to include needy modules from your profile.">Use needies?</p></th>
+          <td><input onchange="needyToggle()" id="neediesCheck" type="checkbox" disabled unchecked></td>
+          -->
         </tr>
         <tr>
           <th><p class="tiny explain" title="Comma separated numbers that dictate the number of modules per bomb.&#xa;Any sequence of non-negative numbers is valid.">Module Counts</p></th>
@@ -128,16 +137,17 @@
           <td><input id="seedValue" type="text"> <button id="random">Randomize</button> <button id="setToDate">Set to date</button> </td>
         </tr>
     </table>
-    <button id="generateCampaign">Generate Campaign</button>
+    <button id="generateCampaign" class="big">Generate Campaign</button>
     <div id="apStuffs"></div>
     <div id="campaign"></div>
     <div class="apCheck"> <p>Archipelago Mode</p> <input onclick="apToggle()" type="checkbox" class="checkbox" id="apCheckbox" style="margin-left: 6em;"></div>
-    <p id="version" class="tiny version">version name-0</p>
+    <a id="infoDoc" class="tiny infoDoc" href="https://blananas2.github.io/ktane-CustomCampaign/">Information Page</a>
+    <a id="version" class="tiny version" href="https://github.com/Blananas2/ktane-CustomCampaign/commits/main/">version name-0</a>
   </body>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src='apfilegen.js'></script>
   <script>
-    const CUSTOM_CAMPAIGN_VERSION = "alfa-5";
+    const CUSTOM_CAMPAIGN_VERSION = "alfa-6";
 
     const rpsDiv = document.getElementById("restorePreviousSession");
     const apCheckbox = document.getElementById("apCheckbox");
@@ -213,8 +223,16 @@
         let rpsButton = document.createElement("button");
         rpsButton.addEventListener("click", (event) => { retrieveLocalStorage(); });
         rpsButton.innerText = "Restore Previous Session";
-        rpsButton.style = "font-size: 36px;";
+        rpsButton.classList.add("big");
         rpsDiv.appendChild(rpsButton);
+        let dismissButton = document.createElement("button");
+        dismissButton.addEventListener("click", (event) => { 
+          rpsDiv.innerHTML = ""; 
+          if (appStatus.textContent == "Click the above button to restore previous session info.") { appStatus.textContent = "Please input a profile." }
+        });
+        dismissButton.innerText = "Dismiss";
+        dismissButton.style = "margin-left: 12px;";
+        rpsDiv.appendChild(dismissButton);
         appStatus.textContent = "Click the above button to restore previous session info.";
       }
     }
@@ -384,16 +402,15 @@
     }
 
     function createDMGStrings() {
-      //TODO: Include the name of the mission at the top of the string
       dmgStrings = [[], []];
-      campaign.forEach(bomb => {
-        let dmgString = `mode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
+      campaign.forEach((bomb, ix) => {
+        let dmgString = `////Bomb ${natoExcel(ix + 1)}\n\nmode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
         dmgString += bomb.join("\n");
         dmgStrings[0].push(dmgString);
       });
       if (freeplay != undefined) {
-        freeplay.forEach(bomb => {
-          let dmgString = `mode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
+        freeplay.forEach((bomb, ix) => {
+          let dmgString = `////Freeplay #${ix + 1}\n\nmode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
           dmgString += bomb.join("\n");
           dmgStrings[1].push(dmgString);
         });
@@ -522,9 +539,9 @@
                 rpsDiv.innerHTML = "";
                 campaignDiv.innerHTML = "";
                 document.body.style.backgroundColor = "#411A1A";
-                appStatus.textContent = "Previous session cleared.";
+                appStatus.textContent = "Previous session data cleared.";
               });
-              clearButton.innerText = "Clear session";
+              clearButton.innerText = "Clear session data";
               rpsDiv.appendChild(clearButton);
             }
           });
@@ -538,6 +555,20 @@
           if (apMode || (currentTotal + 1) == 1) { campaignDiv.appendChild(bombDiv); }
         }
       });
+
+      if (apMode) {
+        let clearButton = document.createElement("button");
+        clearButton.addEventListener("click", () => {
+          if (window.confirm("Are you sure you would like to clear the Archipelago campaign? You will need to recreate the input exactly to get this campaign info back.")) {
+            localStorage.clear();
+            campaignDiv.innerHTML = "";
+            appStatus.textContent = "Campaign data cleared.";
+          }
+        });
+        clearButton.innerText = "Clear campaign";
+        clearButton.classList.add("big");
+        campaignDiv.appendChild(clearButton);
+      }
 
       if (!restored) { localStorage.setItem("Furthest bomb", apMode ? -1 : 1); }
     }
@@ -553,11 +584,13 @@
 
     function doAPStuffs() {
       let apDiv = document.getElementById("apStuffs");
+      apDiv.innerHTML = "";
+
       let table = document.createElement("table");
+
       let slotTr = document.createElement("tr");
       let slotTh = document.createElement("th");
       let slotP = document.createElement("p");
-      apDiv.innerHTML = "";
       slotP.innerText = "Slot name";
       slotP.classList.add("tiny", "explain");
       slotP.title = "The name you'll use for identifying your slot in the multiworld.\nYour name is sufficient if this is your only game, but if not you must make all your slot names distinct.\nMust be between 1 and 16 characters.";
@@ -571,6 +604,22 @@
       slotTr.appendChild(slotTh);
       slotTr.appendChild(slotTd);
       table.appendChild(slotTr);
+
+      let deathlinkTr = document.createElement("tr");
+      let deathlinkTh = document.createElement("th");
+      let deathlinkP = document.createElement("p");
+      deathlinkP.innerText = "Deathlink?";
+      deathlinkP.classList.add("tiny", "explain");
+      deathlinkP.title = "Check this box to enable deathlink.\nIf deathlink is enabled, whenever you explode, everyone else with deathlink dies too!\nOh, and if you recieve a deathlink, detonate your bomb!\nDon't forget to send deathlinks when you explode!";
+      deathlinkTh.appendChild(deathlinkP);
+      let deathlinkTd = document.createElement("td");
+      let deathlinkCheckbox = document.createElement("input");
+      deathlinkCheckbox.type = "checkbox";
+      deathlinkTd.appendChild(deathlinkCheckbox);
+      deathlinkTr.appendChild(deathlinkTh);
+      deathlinkTr.appendChild(deathlinkTd);
+      table.appendChild(deathlinkTr);
+
       apDiv.appendChild(table);
       let yamlButton = document.createElement("button");
       let campaignHash = stringToSeed(campaign.toString()).toString(16);
@@ -581,20 +630,22 @@
           //If you know more about how this is supported by Manual or Archipelago, please do notify me of the source so this can be changed accordingly
           if (!window.confirm("Slot names which are entirely numbers tend to cause problems. Would you like to continue anyway?")) { return; }
         }
-        downloadYAML(slotName, campaignHash, CUSTOM_CAMPAIGN_VERSION);
+        let deathlink = deathlinkCheckbox.checked;
+        downloadYAML(slotName, deathlink, campaignHash, CUSTOM_CAMPAIGN_VERSION);
         localStorage.setItem("Downloaded YAML", true);
       });
       yamlButton.innerHTML = "Download YAML";
       apDiv.appendChild(yamlButton);
       let apworldButton = document.createElement("button");
       apworldButton.addEventListener("click", () => {
+        let deathlink = deathlinkCheckbox.checked;
         let namedCampaign = [];
         campaign.forEach(bomb => {
           let bombArr = [];
           bomb.forEach(module => { bombArr.push(moduleIdToName(module)); });
           namedCampaign.push(bombArr);
         });
-        downloadApworld(namedCampaign, campaignHash);
+        downloadApworld(deathlink, namedCampaign, campaignHash);
       });
       apworldButton.innerHTML = "Download apworld";
       apDiv.appendChild(apworldButton);
