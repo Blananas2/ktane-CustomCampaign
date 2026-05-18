@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <link rel="icon" href="/favicon.ico" />
+    <link rel="icon" href="img/favicon.ico"/>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1">
     <title>KTANE Custom Campaign</title>
@@ -36,8 +36,8 @@
       opacity: 60%;
     }
 
-    .version { right: 16px; }
     .infoDoc { left: 16px; }
+    .version { right: 16px; }
 
     table { table-layout: fixed; }
     
@@ -138,7 +138,6 @@
         </tr>
     </table>
     <button id="generateCampaign" class="big">Generate Campaign</button>
-    <div id="apStuffs"></div>
     <div id="campaign"></div>
     <div class="apCheck"> <p>Archipelago Mode</p> <input onclick="apToggle()" type="checkbox" class="checkbox" id="apCheckbox" style="margin-left: 6em;"></div>
     <a id="infoDoc" class="tiny infoDoc" href="https://blananas2.github.io/ktane-CustomCampaign/">Information Page</a>
@@ -147,7 +146,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src='apfilegen.js'></script>
   <script>
-    const CUSTOM_CAMPAIGN_VERSION = "alfa-6";
+    const CUSTOM_CAMPAIGN_VERSION = "alfa-7";
 
     const rpsDiv = document.getElementById("restorePreviousSession");
     const apCheckbox = document.getElementById("apCheckbox");
@@ -254,7 +253,7 @@
       }
       apCheckbox.checked = apMode;
       createDMGStrings();
-      visualizeCampaign(true);
+      if (!apMode) { visualizeCampaign(true); }
       appStatus.textContent = `Restored campaign from profile with ${profileModules.length} enabled modules.`;
       rpsDiv.innerHTML = "";
     }
@@ -336,9 +335,12 @@
             calculateLogicPath(); 
           };
           createDMGStrings();
-          visualizeCampaign(false);
-          bulkSetLocalStorage();
-          if (apMode) { doAPStuffs(); }
+          if (apMode) { 
+            doAPStuffs(); 
+          } else { 
+            visualizeCampaign(false); 
+            bulkSetLocalStorage();
+          }
           generatedPreviously = true;
         } else { appStatus.textContent = "Can't parse the module counts."; }
       } else { appStatus.textContent = "Can't generate without a KTANE profile."; }
@@ -346,7 +348,7 @@
 
     function calculateLogicPath() {
       freeplay = [];
-      overall = [ "Bomb Alfa" ];
+      overall = [ nameBomb(true, 0) ];
       let noDupes = campaign.map((bomb) => [...new Set(bomb)]);
       let checkTotals = campaign.map((bomb) => bomb.length + 1);
       let stripped = [...noDupes];
@@ -364,7 +366,7 @@
           bombOrder.push(belowThresh);
           checksToSpend -= stripped[belowThresh].length;
           checksToSpend += checkTotals[belowThresh];
-          overall.push(`Bomb ${natoExcel(belowThresh + 1)}`);
+          overall.push(nameBomb(true, belowThresh));
         } else {
           let adapted = stripped.map((bomb, ix) => bomb.length + (bombOrder.includes(ix) ? Number.MAX_SAFE_INTEGER : 0));
           let minimum = Math.min(...adapted);
@@ -375,9 +377,9 @@
           let freeplayModules = stripped[bombOrder[bombOrder.length - 1]];
           freeplayNumbers.forEach(n => { 
             freeplay.push(freeplayModules.splice(0, n));
-            overall.push(`Freeplay #${freeplay.length}`);
+            overall.push(nameBomb(false, freeplay.length - 1));
           });
-          overall.push(`Bomb ${natoExcel(minimumInPlay + 1)}`);
+          overall.push(nameBomb(true, minimumInPlay));
         }
         modulesInLogic.push(...stripped[bombOrder[bombOrder.length - 1]]);
       }
@@ -404,100 +406,43 @@
     function createDMGStrings() {
       dmgStrings = [[], []];
       campaign.forEach((bomb, ix) => {
-        let dmgString = `////Bomb ${natoExcel(ix + 1)}\n\nmode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
-        dmgString += bomb.join("\n");
+        let dmgString = `////${nameBomb(true, ix)}\n\nmode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
+        dmgString += unmap(bomb).join("\n");
         dmgStrings[0].push(dmgString);
       });
       if (freeplay != undefined) {
         freeplay.forEach((bomb, ix) => {
-          let dmgString = `////Freeplay #${ix + 1}\n\nmode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
-          dmgString += bomb.join("\n");
+          let nameSorted = bomb.map(m => moduleIdToName(m)).sort();
+          let idsNameSorted = unmap(bomb);
+          let friendlyModlist = nameSorted.join(nameSorted.join("").includes(',') ? "; " : ", ");
+          let dmgString = `////${nameBomb(false, ix)}\n`;
+          dmgString += [`/******************************************************************`,
+                        `NOTICE: You need all the modules below unlocked to access this bomb.`,
+                        ``,
+                        `${friendlyModlist}`,
+                        `******************************************************************/`
+                        ].join('\n');
+          dmgString += `\nmode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
+          dmgString += idsNameSorted.join("\n");
           dmgStrings[1].push(dmgString);
         });
       }
+
+      function unmap(barr) { return [...barr].sort((x, y) => moduleIdToName(x).localeCompare(moduleIdToName(y))); }
     }
 
     function visualizeCampaign(restored) {
       campaignDiv.innerHTML = "";
 
-      let currentFp = 0;
-
-      if (apMode && freeplay.length != 0) {
-        let bombDiv = document.createElement("div");
-        bombDiv.classList.add("bomb");
-
-        let bombTitle = document.createElement("p");
-        bombTitle.textContent = "Freeplay #1";
-        bombTitle.classList.add("bombTitle");
-        bombDiv.appendChild(bombTitle);
-
-        let prevButton = document.createElement("button");
-        prevButton.classList.add("dmgButton");
-        prevButton.innerText = "Prev.";
-        bombDiv.appendChild(prevButton);
-        let nextButton = document.createElement("button");
-        nextButton.classList.add("dmgButton");
-        nextButton.innerText = "Next";
-        bombDiv.appendChild(nextButton);
-
-        let fpNote = document.createElement("p");
-        fpNote.textContent = "You can only access this bomb if all modules below are unlocked:";
-        fpNote.classList.add("tiny", "freeplayNote");
-        bombDiv.appendChild(fpNote);
-
-        let listUl = document.createElement("ul");
-        listUl.id = "freeplayList";
-        populateFreeplayList(listUl, 0);
-        bombDiv.appendChild(listUl);
-
-        prevButton.addEventListener("click", () => {
-          let ul = document.getElementById("freeplayList");
-          if (currentFp != 0) {
-            currentFp--;
-            bombTitle.textContent = `Freeplay #${currentFp + 1}`;
-            ul.innerHTML = "";
-            populateFreeplayList(ul, currentFp);
-          }
-        });
-        nextButton.addEventListener("click", () => {
-          let ul = document.getElementById("freeplayList");
-          if (currentFp != freeplay.length - 1) {
-            currentFp++;
-            bombTitle.textContent = `Freeplay #${currentFp + 1}`;
-            ul.innerHTML = "";
-            populateFreeplayList(ul, currentFp);
-          }
-        });
-
-        let dmgButton = document.createElement("button");
-        dmgButton.classList.add("dmgButton");
-        dmgButton.addEventListener("click", () => {
-          writeClipboardText(dmgStrings[1][currentFp]);
-        });
-        dmgButton.innerText = "Copy DMG String";
-        bombDiv.appendChild(dmgButton);
-
-        campaignDiv.appendChild(bombDiv);
-      }
-
-      function populateFreeplayList(u, n) {
-        freeplay[n].forEach(module => {
-          let moduleLi = document.createElement("li");
-          moduleLi.textContent = moduleIdToName(module);
-          u.appendChild(moduleLi);
-        });
-      }
-
       bombDivs = [];
-      let bombCount = 1;
 
-      campaign.forEach(bomb => {
+      campaign.forEach((bomb, ix) => {
         let bombDiv = document.createElement("div");
         let modulesUl = document.createElement("ul");
         let bombTitle = document.createElement("p");
         bombDiv.classList.add("bomb");
         
-        bombTitle.textContent = `Bomb ${natoExcel(bombCount++)}`;
+        bombTitle.textContent = nameBomb(true, ix);
         bombTitle.classList.add("bombTitle");
         bombDiv.appendChild(bombTitle);
 
@@ -511,42 +456,41 @@
         dmgButton.innerText = "Copy DMG String";
         bombDiv.appendChild(dmgButton);
 
-        if (!apMode) {
-          bomb.forEach(module => {
-            let moduleName = moduleIdToName(module);
-            let moduleLi = document.createElement("li");
-            moduleLi.textContent = moduleName;
-            modulesUl.appendChild(moduleLi);
-          });
-          bombDiv.appendChild(modulesUl);
+        bomb.forEach(module => {
+          let moduleName = moduleIdToName(module);
+          let moduleLi = document.createElement("li");
+          moduleLi.textContent = moduleName;
+          modulesUl.appendChild(moduleLi);
+        });
+        bombDiv.appendChild(modulesUl);
 
-          let checkbox = document.createElement("input");
-          checkbox.classList.add("checkbox");
-          checkbox.type = "checkbox";
-          if (restored && currentTotal < furthestBomb - 1) { checkbox.checked = true; }
-          checkbox.addEventListener("change", () => {
-            try {
-              if (campaignDiv.getElementsByTagName('div').length == currentTotal + 1) { 
-                campaignDiv.appendChild(bombDivs[currentTotal + 1]);
-                localStorage.setItem("Furthest bomb", currentTotal + 2);
-              } 
-            } catch {
-              document.body.style.backgroundColor = "#1A411A";
-              appStatus.textContent = "Congratulations! Press the button above to clear the session from memory.";
-              let clearButton = document.createElement("button");
-              clearButton.addEventListener("click", () => {
-                localStorage.clear();
-                rpsDiv.innerHTML = "";
-                campaignDiv.innerHTML = "";
-                document.body.style.backgroundColor = "#411A1A";
-                appStatus.textContent = "Previous session data cleared.";
-              });
-              clearButton.innerText = "Clear session data";
-              rpsDiv.appendChild(clearButton);
-            }
-          });
-          bombDiv.appendChild(checkbox);
-        }
+        let checkbox = document.createElement("input");
+        checkbox.classList.add("checkbox");
+        checkbox.type = "checkbox";
+        if (restored && currentTotal < furthestBomb - 1) { checkbox.checked = true; }
+        checkbox.addEventListener("change", () => {
+          try {
+            if (campaignDiv.getElementsByTagName('div').length == currentTotal + 1) { 
+              campaignDiv.appendChild(bombDivs[currentTotal + 1]);
+              localStorage.setItem("Furthest bomb", currentTotal + 2);
+            } 
+          } catch {
+            document.body.style.backgroundColor = "#1A411A";
+            appStatus.textContent = "Congratulations! Press the button above to clear the session from memory.";
+            let clearButton = document.createElement("button");
+            clearButton.addEventListener("click", () => {
+              localStorage.clear();
+              rpsDiv.innerHTML = "";
+              campaignDiv.innerHTML = "";
+              document.body.style.backgroundColor = "#411A1A";
+              appStatus.textContent = "Previous session data cleared.";
+            });
+            clearButton.innerText = "Clear session data";
+            clearButton.classList.add("big");
+            rpsDiv.appendChild(clearButton);
+          }
+        });
+        bombDiv.appendChild(checkbox);
 
         bombDivs.push(bombDiv);
         if (restored) {
@@ -555,20 +499,6 @@
           if (apMode || (currentTotal + 1) == 1) { campaignDiv.appendChild(bombDiv); }
         }
       });
-
-      if (apMode) {
-        let clearButton = document.createElement("button");
-        clearButton.addEventListener("click", () => {
-          if (window.confirm("Are you sure you would like to clear the Archipelago campaign? You will need to recreate the input exactly to get this campaign info back.")) {
-            localStorage.clear();
-            campaignDiv.innerHTML = "";
-            appStatus.textContent = "Campaign data cleared.";
-          }
-        });
-        clearButton.innerText = "Clear campaign";
-        clearButton.classList.add("big");
-        campaignDiv.appendChild(clearButton);
-      }
 
       if (!restored) { localStorage.setItem("Furthest bomb", apMode ? -1 : 1); }
     }
@@ -583,8 +513,7 @@
     }
 
     function doAPStuffs() {
-      let apDiv = document.getElementById("apStuffs");
-      apDiv.innerHTML = "";
+      campaignDiv.innerHTML = "";
 
       let table = document.createElement("table");
 
@@ -620,7 +549,7 @@
       deathlinkTr.appendChild(deathlinkTd);
       table.appendChild(deathlinkTr);
 
-      apDiv.appendChild(table);
+      campaignDiv.appendChild(table);
       let yamlButton = document.createElement("button");
       let campaignHash = stringToSeed(campaign.toString()).toString(16);
       yamlButton.addEventListener("click", () => {
@@ -635,7 +564,7 @@
         localStorage.setItem("Downloaded YAML", true);
       });
       yamlButton.innerHTML = "Download YAML";
-      apDiv.appendChild(yamlButton);
+      campaignDiv.appendChild(yamlButton);
       let apworldButton = document.createElement("button");
       apworldButton.addEventListener("click", () => {
         let deathlink = deathlinkCheckbox.checked;
@@ -648,7 +577,17 @@
         downloadApworld(deathlink, namedCampaign, campaignHash);
       });
       apworldButton.innerHTML = "Download apworld";
-      apDiv.appendChild(apworldButton);
+      campaignDiv.appendChild(apworldButton);
+
+      let dmgDiv = document.createElement("div");
+      let dmgButton = document.createElement("button");
+      dmgButton.addEventListener("click", () => {
+        downloadDMGFiles(campaignHash);
+      });
+      dmgButton.innerText = "Download DMG Missions";
+      dmgButton.classList.add("big");
+      dmgDiv.appendChild(dmgButton)
+      campaignDiv.appendChild(dmgDiv);
     }
 
     function moduleIdToName(modId) { return ktaneModules.find((entry) => entry[0] == modId)[1]; }
@@ -679,6 +618,10 @@
     }
 
     async function writeClipboardText(text) { await navigator.clipboard.writeText(text); }
+
+    function nameBomb(partOfCamp, index) {
+      return partOfCamp ? `Bomb ${natoExcel(index+1)}` : `Freeplay #${index+1}`;
+    }
     
     function natoExcel(n) {
       let letters = [];

@@ -1,9 +1,18 @@
 function downloadYAML(slotName, dlink, campHash, version) {
+  let dlOption = dlink ?
+  [ `  death_link:`,
+    `    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.`,
+    `    'false': 0`,
+    `    'true': 50`
+  ].join('\n') :
+  "  # Death Link is disabled #";
+
   let yamlData = [
     `name: ${slotName}`,
     ``,
     `# Used to describe your yaml. Useful if you have multiple files.`,
     `description: Keep Talking Custom Campaign for ${slotName} generated with hash ${campHash} on version ${version}`,
+    //it might be worth adding additional context here to help trace down bugs!
     ``,
     `game: Manual_KTCC${campHash}_Blan`,
     `requires:`,
@@ -29,7 +38,7 @@ function downloadYAML(slotName, dlink, campHash, version) {
     `    normal: 50 # equivalent to 50`,
     `    extreme: 0 # equivalent to 99`,
     ``,
-    `  # Death Link is disabled #`,
+    dlOption,
     ``,
     `  accessibility:`,
     `    # Set rules for reachability of your items/locations.`,
@@ -85,17 +94,6 @@ function downloadYAML(slotName, dlink, campHash, version) {
     `    # Generic items plando.`,
     `    []`
   ].join('\n');
-  if (dlink) {
-    yamlData = yamlData.replace(
-      "# Death Link is disabled #", 
-    [ 
-      `  death_link:`,
-      `    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.`,
-      `    'false': 0`,
-      `    'true': 50`,
-    ].join('\n')
-    );
-  }
   let yamlFile = new File([yamlData], `${slotName}.yaml`, { type: "application/yaml" });
 
   downloadFile(`${slotName}.yaml`, yamlFile, yamlFile.type);
@@ -244,6 +242,20 @@ function generateManualData(dlink, camp, campHash) {
       requires: `|@${bn} Mods:ALL|`
     });
   }
+}
+
+async function downloadDMGFiles(campHash) {
+  const zip = new JSZip();
+
+  dmgStrings[0].forEach((str, ix) => {
+    zip.file(`${nameBomb(true, ix)}.txt`, str);
+  });
+  dmgStrings[1].forEach((str, ix) => {
+    zip.file(`${nameBomb(false, ix)}.txt`, str);
+  });
+
+  let dmgFilesBlob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+  downloadFile(`KTCC ${campHash}.zip`, dmgFilesBlob, "application/zip");
 }
 
 function downloadFile(filename, content, mimeType) {
