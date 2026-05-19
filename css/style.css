@@ -1,0 +1,98 @@
+body {
+  background-color: #411A1A;
+  font-size: 24px;
+  margin-left: 160px;
+  margin-right: 160px;
+}
+
+p, ul, a {
+  font-family: 'Inter', Arial, sans-serif;
+  color: white;
+}
+
+div.apCheck {
+  position: fixed;
+  top: 0px;
+  right: 16px;
+}
+
+.version, .infoDoc {
+  position: fixed;
+  bottom: 16px;
+  opacity: 60%;
+}
+
+.infoDoc { left: 16px; }
+.version { right: 16px; }
+
+table { table-layout: fixed; }
+
+tr { 
+  height: 28px; 
+  margin-top: 0px;
+}
+td { max-width: 500px; }
+th { 
+  width: 125px; 
+  max-width: 125px; 
+}
+
+p.tiny, a.tiny { 
+  font-size: 16px;
+  margin: 0px;
+}
+p.explain { 
+  border-bottom: dashed 1px; 
+  cursor: help;
+}
+
+input#moduleCounts { width: 492px; }
+
+input.checkbox {
+  width: 3em;
+  height: 3em;
+  margin: 1em;
+  margin-left: 2em;
+  margin-top: -20px;
+}
+
+input, button { font-family: 'Inter', Verdana, sans-serif }
+
+p#bombTotal {
+  overflow: visible;
+  white-space: nowrap;
+}
+
+input#pbSlider { width: 192px; }
+
+p.small { margin: 0px; }
+
+div.bomb {
+  border-style: solid;
+  border-color: gray;
+  width: 800px;
+  margin-top: 0.5em;
+}
+
+p.bombTitle { 
+  text-decoration: underline; 
+  margin: 16px;
+  margin-bottom: -6px;
+}
+
+ul { 
+  font-size: 20px; 
+  margin: 12px;
+  margin-top: 0px;
+  margin-bottom: 30px;
+}
+
+button.dmgButton { 
+  margin: 1em;
+  margin-left: 1.1em;
+}
+
+button.big { 
+  margin-top: 12px;
+  font-size: 24px; 
+}

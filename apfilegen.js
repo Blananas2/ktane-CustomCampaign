@@ -1,18 +1,9 @@
-function downloadYAML(slotName, dlink, campHash, version) {
-  let dlOption = dlink ?
-  [ `  death_link:`,
-    `    # When you die, everyone who enabled death link dies. Of course, the reverse is true too.`,
-    `    'false': 0`,
-    `    'true': 50`
-  ].join('\n') :
-  "  # Death Link is disabled #";
-
+function downloadYAML(slotName, options, campHash, version) {
   let yamlData = [
     `name: ${slotName}`,
     ``,
     `# Used to describe your yaml. Useful if you have multiple files.`,
     `description: Keep Talking Custom Campaign for ${slotName} generated with hash ${campHash} on version ${version}`,
-    //it might be worth adding additional context here to help trace down bugs!
     ``,
     `game: Manual_KTCC${campHash}_Blan`,
     `requires:`,
@@ -23,22 +14,10 @@ function downloadYAML(slotName, dlink, campHash, version) {
     `  # Game Options #`,
     `  ################`,
     `  progression_balancing:`,
-    `    # A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.`,
-    `    #`,
-    `    # A lower setting means more getting stuck. A higher setting means less getting stuck.`,
-    `    #`,
-    `    # You can define additional values between the minimum and maximum values.`,
-    `    # Minimum value is 0`,
-    `    # Maximum value is 99`,
-    `    random: 0`,
-    `    random-low: 0 # random value weighted towards lower values`,
-    `    random-high: 0 # random value weighted towards higher values`,
-    `    random-range-0-99: 0 # random value between 0 and 99`,
-    `    disabled: 0 # equivalent to 0`,
-    `    normal: 50 # equivalent to 50`,
-    `    extreme: 0 # equivalent to 99`,
+    `    '${options.progressionBalancing}': 1`,
     ``,
-    dlOption,
+    `  death_link:`,
+    `    '${options.deathlink}': 1`,
     ``,
     `  accessibility:`,
     `    # Set rules for reachability of your items/locations.`,
@@ -115,7 +94,7 @@ async function downloadApworld(dlink, camp, campHash) {
     })
   );
   
-  let worldFiles = [ "game", "items", "locations", "regions" ];
+  let worldFiles = [ "events", "game", "items", "locations", "regions" ];
 
   for (let f = 0; f < worldFiles.length; f++) {
     zip.file(`Manual_KTCC${campHash}_Blan/data/${worldFiles[f]}.json`, JSON.stringify(worldData[f], null, 4));
@@ -126,6 +105,10 @@ async function downloadApworld(dlink, camp, campHash) {
 }
 
 function generateManualData(dlink, camp, campHash) {
+  let events = {
+    "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.events.schema.json",
+    data: []
+  };
   let game = {
     "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.game.schema.json",
     "game": `KTCC${campHash}`,
@@ -133,7 +116,7 @@ function generateManualData(dlink, camp, campHash) {
     "filler_item_name": "Blank Manual Page",
     "starting_items": [ { "items": [] } ],
     "death_link": dlink,
-    "starting_index": 1
+    "starting_index": 1 //Might be unnecessary since the item numbering is done app-side?
   };
   let items = { 
     "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.items.schema.json",
@@ -215,9 +198,9 @@ function generateManualData(dlink, camp, campHash) {
   });
 
   locations.data.push({
-    name: "All Bombs Defused",
+    name: `All Bombs Defused`,
     category: "Victory",
-    requires: "|@Module:ALL|",
+    requires: `|@${overall[overall.length - 1]} Defused:ALL|`, //Set to the latest bomb ensures it will be the last check (for 100%)
     victory: true
   });
 
@@ -232,7 +215,7 @@ function generateManualData(dlink, camp, campHash) {
     if (bix != overall.length - 1) { regions[bomb]["connects_to"].push(overall[bix + 1]); }
   });
 
-  return [ game, items, locations, regions ];
+  return [ events, game, items, locations, regions ];
 
   function pushLocationDefused(bn) {
     locations.data.push({
@@ -240,6 +223,11 @@ function generateManualData(dlink, camp, campHash) {
       category: [`${bn} Checks`],
       region: bn,
       requires: `|@${bn} Mods:ALL|`
+    });
+    events.data.push({
+      name: `${bn} Defused Event`,
+      category: ["Bombs Defused"],
+      copy_location: `${bn} Defused`
     });
   }
 }

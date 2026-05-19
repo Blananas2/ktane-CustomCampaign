@@ -6,111 +6,11 @@
     <meta name="viewport" content="initial-scale=1">
     <title>KTANE Custom Campaign</title>
   </head>
+  <link rel="stylesheet" type="text/css" href="css/style.css">
   <style>
     @font-face {
       font-family: 'Inter';
       src: url(font/Inter_18pt-Medium.ttf);
-    }
-
-    body {
-      background-color: #411A1A;
-      font-size: 24px;
-      margin-left: 160px;
-      margin-right: 160px;
-    }
-
-    p, ul, a {
-      font-family: 'Inter', Arial, sans-serif;
-      color: white;
-    }
-
-    div.apCheck {
-      position: fixed;
-      top: 0px;
-      right: 16px;
-    }
-
-    .version, .infoDoc {
-      position: fixed;
-      bottom: 16px;
-      opacity: 60%;
-    }
-
-    .infoDoc { left: 16px; }
-    .version { right: 16px; }
-
-    table { table-layout: fixed; }
-    
-    tr { 
-      height: 28px; 
-      margin-top: 0px;
-    }
-    td { max-width: 500px; }
-    th { 
-      width: 125px; 
-      max-width: 125px; 
-    }
-
-    p.tiny, a.tiny { 
-      font-size: 16px;
-      margin: 0px;
-    }
-    p.explain { 
-      border-bottom: dashed 1px; 
-      cursor: help;
-    }
-
-    input#moduleCounts { width: 492px; }
-
-    input.checkbox {
-      width: 3em;
-      height: 3em;
-      margin: 1em;
-      margin-left: 2em;
-      margin-top: -20px;
-    }
-
-    button { font-family: 'Inter', Verdana, sans-serif }
-
-    p#bombTotal {
-      overflow: visible;
-      white-space: nowrap;
-    }
-
-    div.bomb {
-      border-style: solid;
-      border-color: gray;
-      width: 800px;
-      margin-top: 0.5em;
-    }
-
-    p.bombTitle { 
-      text-decoration: underline; 
-      margin: 16px;
-      margin-bottom: -6px;
-    }
-
-    p.freeplayNote { 
-      margin-top: 8px;
-      margin-left: 16px; 
-      margin-bottom: 8px;
-    }
-    
-    ul { 
-      font-size: 20px; 
-      margin: 12px;
-      margin-top: 0px;
-      margin-bottom: 30px;
-    }
-
-    button.dmgButton { 
-      margin: 1em;
-      margin-left: 1.1em;
-    }
-    
-    button.big { 
-      margin-top: 12px;
-      font-size: 24px; 
     }
   </style>
   <body>
@@ -146,7 +46,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src='apfilegen.js'></script>
   <script>
-    const CUSTOM_CAMPAIGN_VERSION = "alfa-7";
+    const CUSTOM_CAMPAIGN_VERSION = "alfa-8";
 
     const rpsDiv = document.getElementById("restorePreviousSession");
     const apCheckbox = document.getElementById("apCheckbox");
@@ -221,15 +121,16 @@
       if (localStorage.getItem("Seed value")) {
         let rpsButton = document.createElement("button");
         rpsButton.addEventListener("click", (event) => { retrieveLocalStorage(); });
-        rpsButton.innerText = "Restore Previous Session";
+        rpsButton.innerText = `Restore Previous ${localStorage.getItem("Archipelago mode") == "true" ? "(Archipelago) " : ""}Session`;
         rpsButton.classList.add("big");
         rpsDiv.appendChild(rpsButton);
         let dismissButton = document.createElement("button");
-        dismissButton.addEventListener("click", (event) => { 
-          rpsDiv.innerHTML = ""; 
+        dismissButton.addEventListener("click", (event) => {
+          localStorage.clear();
+          rpsDiv.innerHTML = "";
           if (appStatus.textContent == "Click the above button to restore previous session info.") { appStatus.textContent = "Please input a profile." }
         });
-        dismissButton.innerText = "Dismiss";
+        dismissButton.innerText = "Dismiss and Delete";
         dismissButton.style = "margin-left: 12px;";
         rpsDiv.appendChild(dismissButton);
         appStatus.textContent = "Click the above button to restore previous session info.";
@@ -253,7 +154,12 @@
       }
       apCheckbox.checked = apMode;
       createDMGStrings();
-      if (!apMode) { visualizeCampaign(true); }
+      if (apMode) {
+        calculateLogicPath(); 
+        archipelagoSetup();
+      } else {
+        visualizeCampaign(true); 
+      }
       appStatus.textContent = `Restored campaign from profile with ${profileModules.length} enabled modules.`;
       rpsDiv.innerHTML = "";
     }
@@ -336,11 +242,11 @@
           };
           createDMGStrings();
           if (apMode) { 
-            doAPStuffs(); 
+            archipelagoSetup(); 
           } else { 
             visualizeCampaign(false); 
-            bulkSetLocalStorage();
           }
+          bulkSetLocalStorage();
           generatedPreviously = true;
         } else { appStatus.textContent = "Can't parse the module counts."; }
       } else { appStatus.textContent = "Can't generate without a KTANE profile."; }
@@ -407,13 +313,13 @@
       dmgStrings = [[], []];
       campaign.forEach((bomb, ix) => {
         let dmgString = `////${nameBomb(true, ix)}\n\nmode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
-        dmgString += unmap(bomb).join("\n");
+        dmgString += nameOrder(bomb).join("\n");
         dmgStrings[0].push(dmgString);
       });
       if (freeplay != undefined) {
         freeplay.forEach((bomb, ix) => {
           let nameSorted = bomb.map(m => moduleIdToName(m)).sort();
-          let idsNameSorted = unmap(bomb);
+          let idsNameSorted = nameOrder(bomb);
           let friendlyModlist = nameSorted.join(nameSorted.join("").includes(',') ? "; " : ", ");
           let dmgString = `////${nameBomb(false, ix)}\n`;
           dmgString += [`/******************************************************************`,
@@ -428,7 +334,7 @@
         });
       }
 
-      function unmap(barr) { return [...barr].sort((x, y) => moduleIdToName(x).localeCompare(moduleIdToName(y))); }
+      function nameOrder(barr) { return [...barr].sort((x, y) => moduleIdToName(x).localeCompare(moduleIdToName(y))); }
     }
 
     function visualizeCampaign(restored) {
@@ -512,7 +418,7 @@
       localStorage.setItem("Generated freeplay", JSON.stringify(freeplay));
     }
 
-    function doAPStuffs() {
+    function archipelagoSetup() {
       campaignDiv.innerHTML = "";
 
       let table = document.createElement("table");
@@ -533,6 +439,30 @@
       slotTr.appendChild(slotTh);
       slotTr.appendChild(slotTd);
       table.appendChild(slotTr);
+
+      let pbTr = document.createElement("tr");
+      let pbTh = document.createElement("th");
+      let pbP = document.createElement("p");
+      pbP.innerText = "Progression Balancing";
+      pbP.classList.add("tiny", "explain");
+      pbP.title = "A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.\nA lower setting means more getting stuck. A higher setting means less getting stuck.\nValues range from 0 to 99.";
+      pbTh.appendChild(pbP);
+      let pbSliderTd = document.createElement("td");
+      let pbSlider = document.createElement("input");
+      pbSlider.type = "range";
+      pbSlider.max = 99;
+      pbSlider.id = "pbSlider";
+      let pbNumTd = document.createElement("td");
+      let pbNum = document.createElement("p");
+      pbNum.innerText = "50";
+      pbNum.classList.add("small");
+      pbSlider.addEventListener("input", () => { pbNum.innerText = pbSlider.value });
+      pbSliderTd.appendChild(pbSlider);
+      pbNumTd.appendChild(pbNum);
+      pbTr.appendChild(pbTh);
+      pbTr.appendChild(pbSliderTd);
+      pbTr.appendChild(pbNumTd);
+      table.appendChild(pbTr);
 
       let deathlinkTr = document.createElement("tr");
       let deathlinkTh = document.createElement("th");
@@ -559,8 +489,11 @@
           //If you know more about how this is supported by Manual or Archipelago, please do notify me of the source so this can be changed accordingly
           if (!window.confirm("Slot names which are entirely numbers tend to cause problems. Would you like to continue anyway?")) { return; }
         }
-        let deathlink = deathlinkCheckbox.checked;
-        downloadYAML(slotName, deathlink, campaignHash, CUSTOM_CAMPAIGN_VERSION);
+        let options = {
+          deathlink: deathlinkCheckbox.checked,
+          progressionBalancing: pbSlider.value
+        };
+        downloadYAML(slotName, options, campaignHash, CUSTOM_CAMPAIGN_VERSION);
         localStorage.setItem("Downloaded YAML", true);
       });
       yamlButton.innerHTML = "Download YAML";

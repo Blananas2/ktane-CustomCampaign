@@ -29,18 +29,18 @@ At this time, the world functions as follows:
 - You will need [Archipelago](https://archipelago.gg/tutorial/Archipelago/setup_en) and [Manual](https://github.com/ManualForArchipelago/Manual/tree/main/docs/play) installed. (Both of the links here are the relevant setup guides.)
 - You will need [Dynamic Mission Generator](https://steamcommunity.com/sharedfiles/filedetails/?id=1633427044), its dependancies, and all modded modules you would like to play both installed and enabled.
 - You will need a profile. To create one, you can use the Mod Selector (the tablet) in-game or the [Profile Editor](https://ktane.timwi.de/More/Profile%20Editor.html). **Note:** Only Expert profiles will work.
-- All experts will need to access to the [Repository of Manual Pages](https://ktane.timwi.de/).
+- Everyone experting will need to access to the [Repository of Manual Pages](https://ktane.timwi.de/).
 
-# Creating your game
+# Creating and setting up your game
 
 - Go to the [webapp](https://blananas2.github.io/ktane-CustomCampaign/customcampaign.html).
 - Check the Archipelago Mode checkbox.
 - Input your profile next to where it says "KTANE Profile". If you made your profile in-game, the file can be found at one of the paths below.
   - Windows: `%APPDATA%\..\LocalLow\Steel Crate Games\Keep Talking and Nobody Explodes\ModProfiles`
-  - Mac: `~/Library/Application Support/com.steelcrategames.keeptalkingandnobodyexplodes/ModProfiles`
   - Linux: `~/.config/unity3d/Steel Crate Games/Keep Talking and Nobody Explodes/ModProfiles`
   - Linux (flatpak): `~/.var/app/com.valvesoftware.Steam/.config/unity3d/Steel Crate Games/Keep Talking and Nobody Explodes/ModProfiles`
   - Steam Deck (Proton): `~/.local/share/Steam/steamapps/compatdata/341800/pfx/drive_c/users/steamuser/AppData/LocalLow/Steel Crate Games/Keep Talking and Nobody Explodes/ModProfiles`
+  - Mac: `~/Library/Application Support/com.steelcrategames.keeptalkingandnobodyexplodes/ModProfiles`
 - Set the remainder of your settings to your liking. Hovering over any text with a dotted line under it explains the effects of the settings.
 - Click "Generate Campaign", and more Archipelago-specific settings will appear. If you later change any settings *above* the "Generate Campaign" button, you will need to click "Generate Campaign" to use those new settings.
 - After all settings are to your liking, click "Download YAML", "Download apworld", and "Download DMG Missions".
@@ -48,19 +48,20 @@ At this time, the world functions as follows:
 - Place your yaml in your Archipelago Players folder and install the apworld by double-clicking on it or running it like an executable.
 - Unzip the zip file, and place all of the txt files in your DMG Missions folder, which can be found at one of the paths below.
   - Windows: `%APPDATA%\..\LocalLow\Steel Crate Games\Keep Talking and Nobody Explodes\DMGMissions`
-  - _(more OSs requested, please send a PR if you can!)_
+  - Linux: `~/.config/unity3d/Steel Crate Games/Keep Talking and Nobody Explodes/DMGMissions`
+  - Linux (flatpak): `~/.var/app/com.valvesoftware.Steam/.config/unity3d/Steel Crate Games/Keep Talking and Nobody Explodes/DMGMissions`
+  - Steam Deck (Proton): `~/.local/share/Steam/steamapps/compatdata/341800/pfx/drive_c/users/steamuser/AppData/LocalLow/Steel Crate Games/Keep Talking and Nobody Explodes/DMGMissions`
+  - Mac: `~/Library/Logs/Unity/DMGMissions`
 
 # Playing your game
 
-- In your Archipelago Launcher, open the Manual Client.
+- In your Archipelago Launcher, open the Manual Client. Relaunch the Archipelago Launcher if Manual Client isn't present in the list.
 - Ensure the Manual Game ID matches that of the installed apworld.
 - Connect to the relevant server and enter your slot name.
 - Click on the "Manual" tab. This is where you send checks out to other worlds.
 - If you had KTANE open in the process of downloading mods, close it and reopen it (and ensure the necessary mods are enabled).
 - In KTANE, click on the Mod Selector, then Dynamic Mission Generator. Your missions are run through here.
 - For each mission you play, *assuming its checks are shown in green in the Manual Client*:
-  - Click the "Missions" button
-  - Click on the mission's name in the list.
-  - Click the Run button, and the mission will start.
+  - Click the "Missions" button, then the mission's name in the list, then the Run button. The mission will start soon after, so be ready!
   - After a defusal or detonation, open the dropdown for the relevant mission in the Manual client, and click any modules that were defused. If you don't remember which were defused, you can access the logfile to find out. Easiest method is via the [Log Viewer Hotkey](https://steamcommunity.com/sharedfiles/filedetails/?id=1358839759), where you simply need to press Shift+F7. Don't forget to send a deathlink as well if the bomb exploded.
 - After **all** bombs are defused, after sending all other checks, open the "Victory" dropdown, and click the "All Bombs Defused" button.

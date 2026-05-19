@@ -1,7 +1,6 @@
 {
   "files": [
     "data/categories.json",
-    "data/events.json",
     "data/meta.json",
     "data/options.json",
     "hooks/__init__.py",
