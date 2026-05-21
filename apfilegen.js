@@ -90,14 +90,22 @@ async function downloadApworld(options, camp, campHash) {
   
   const manifest = await fetch("manifest.json").then(r => r.json());
 
-  await Promise.all(
-    manifest.files.map(async (fileName) => {
-      const res = await fetch(`Manual_KTCC_Blan/${fileName}`);
-      const content = await res.text();
+  try {
+    await Promise.all(
+      manifest.files.map(async (fileName) => {
+        const request = await fetch(`Manual_KTCC_Blan/${fileName}`);
 
-      zip.file(`Manual_KTCC${campHash}_Blan/${fileName}`, content);
-    })
-  );
+        if (!request.ok) { throw new Error(`${fileName} request status: ${request.status}`); }
+
+        const content = await request.arrayBuffer();
+
+        zip.file(`Manual_KTCC${campHash}_Blan/${fileName}`, content);
+      })
+    );
+  } catch (err) {
+    appStatus.textContent = err;
+    return;
+  }
 
   let worldFiles = [ "events", "game", "items", "locations", "regions" ];
 

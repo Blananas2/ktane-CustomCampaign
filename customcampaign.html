@@ -84,7 +84,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src='apfilegen.js'></script>
   <script>
-    const CUSTOM_CAMPAIGN_VERSION = "alfa-9";
+    const CUSTOM_CAMPAIGN_VERSION = "alfa-9.1";
 
     const rpsDiv = getId("restorePreviousSession");
     const apCheckbox = getId("apCheckbox");
@@ -821,7 +821,7 @@
               vanillas: localStorage.getItem("Vanilla enabled"),
               modCounts: modCountsPreset != "None" ? modCountsPreset : localStorage.getItem("Module counts"),
               mode: localStorage.getItem("Bomb mode").toLowerCase(),
-              ruleseed: localStorage.getItem("Rule seed enabled") ? (localStorage.getItem("Rule seed chaos") ? "chaos" : `on, seed = ${localStorage.getItem("Rule seed number")}`) : "off",
+              ruleseed: localStorage.getItem("Rule seed enabled") ? (localStorage.getItem("Rule seed chaos") == "true" ? "chaos" : `on, seed = ${localStorage.getItem("Rule seed number")}`) : "off",
               timeScale: localStorage.getItem("Time scale"),
               strikes: localStorage.getItem("Strikes number"),
               widgets: localStorage.getItem("Widgets number"),
