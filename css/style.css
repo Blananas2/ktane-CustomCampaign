@@ -31,10 +31,10 @@ tr {
   height: 28px; 
   margin-top: 0px;
 }
-td { max-width: 500px; }
+td { max-width: 395px; }
 th { 
-  width: 125px; 
-  max-width: 125px; 
+  width: 130px; 
+  max-width: 130px; 
 }
 
 p.tiny, a.tiny { 
@@ -46,9 +46,14 @@ p.explain {
   cursor: help;
 }
 
-input#moduleCounts { width: 492px; }
+input.normalCheckbox {
+  width: 20px;
+  height: 20px;
+}
 
-input.checkbox {
+input#moduleCounts { width: 370px; }
+
+input.bigCheckbox {
   width: 3em;
   height: 3em;
   margin: 1em;
@@ -56,14 +61,20 @@ input.checkbox {
   margin-top: -20px;
 }
 
-input, button { font-family: 'Inter', Verdana, sans-serif }
+input, select, button { font-family: 'Inter', Verdana, sans-serif }
 
 p#bombTotal {
   overflow: visible;
   white-space: nowrap;
 }
 
-input#pbSlider { width: 192px; }
+input.range { width: 192px; }
+
+a.blue { 
+  color: #3e90ff;
+  cursor: pointer;
+  text-decoration: underline;
+}
 
 p.small { margin: 0px; }
 

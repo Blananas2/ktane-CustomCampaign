@@ -1,29 +1,35 @@
-function downloadYAML(slotName, options, campHash, version) {
+function downloadYAML(slotName, ap, kt, campHash, version) {
+  let ktaneInfoLines = [];
+  for (let [k, v] of Object.entries(kt)) {
+    ktaneInfoLines.push(`# ${k} = ${v}`);
+  }
+
   let yamlData = [
     `name: ${slotName}`,
     ``,
-    `# Used to describe your yaml. Useful if you have multiple files.`,
     `description: Keep Talking Custom Campaign for ${slotName} generated with hash ${campHash} on version ${version}`,
     ``,
     `game: Manual_KTCC${campHash}_Blan`,
     `requires:`,
     `  version: 0.6.6 # Version of Archipelago required for this yaml to work as expected.`,
     ``,
+    `### KTCC info: ###`,
+    `# victoryRequirement = ${ap.victoryRequirement}`,
+    ktaneInfoLines.join("\n"),
+    ``,
     `Manual_KTCC${campHash}_Blan:`,
     `  ################`,
     `  # Game Options #`,
     `  ################`,
     `  progression_balancing:`,
-    `    '${options.progressionBalancing}': 1`,
+    `    '${ap.progressionBalancing}': 1`,
     ``,
     `  death_link:`,
-    `    '${options.deathlink}': 1`,
+    `    '${ap.deathlink}': 1`,
     ``,
     `  accessibility:`,
     `    # Set rules for reachability of your items/locations.`,
-    `    #`,
     `    # **Full:** ensure everything can be reached and acquired.`,
-    `    #`,
     `    # **Minimal:** ensure what is needed to reach your goal can be acquired.`,
     `    full: 50`,
     `    minimal: 0`,
@@ -40,12 +46,11 @@ function downloadYAML(slotName, options, campHash, version) {
     `    []`,
     ``,
     `  start_inventory:`,
-    `    # Start with the specified amount of these items. Example: "Bomb: 1"`,
+    `    # Start with the specified amount of these items. Example: "Forget Me Not: 1"`,
     `    {}`,
     ``,
     `  start_inventory_from_pool:`,
-    `    # Start with the specified amount of these items and don't place them in the world. Example: "Bomb: 1"`,
-    `    #`,
+    `    # Start with the specified amount of these items and don't place them in the world. Example: "Forget Me Not: 1"`,
     `    # The game decides what the replacement items will be.`,
     `    {}`,
     ``,
@@ -78,10 +83,10 @@ function downloadYAML(slotName, options, campHash, version) {
   downloadFile(`${slotName}.yaml`, yamlFile, yamlFile.type);
 }
 
-async function downloadApworld(dlink, camp, campHash) {
+async function downloadApworld(options, camp, campHash) {
   const zip = new JSZip();
 
-  let worldData = generateManualData(dlink, camp, campHash);
+  let worldData = generateManualData(options, camp, campHash);
   
   const manifest = await fetch("manifest.json").then(r => r.json());
 
@@ -93,7 +98,7 @@ async function downloadApworld(dlink, camp, campHash) {
       zip.file(`Manual_KTCC${campHash}_Blan/${fileName}`, content);
     })
   );
-  
+
   let worldFiles = [ "events", "game", "items", "locations", "regions" ];
 
   for (let f = 0; f < worldFiles.length; f++) {
@@ -104,7 +109,7 @@ async function downloadApworld(dlink, camp, campHash) {
   downloadFile(`Manual_KTCC${campHash}_Blan.apworld`, apworldBlob, "application/zip");
 }
 
-function generateManualData(dlink, camp, campHash) {
+function generateManualData(options, camp, campHash) {
   let events = {
     "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.events.schema.json",
     data: []
@@ -115,8 +120,8 @@ function generateManualData(dlink, camp, campHash) {
     "creator": "Blan",
     "filler_item_name": "Blank Manual Page",
     "starting_items": [ { "items": [] } ],
-    "death_link": dlink,
-    "starting_index": 1 //Might be unnecessary since the item numbering is done app-side?
+    "death_link": options.deathlink,
+    "starting_index": 1 //Might be unnecessary since the item numbering is done app-side? Keeping regardless just in case.
   };
   let items = { 
     "$schema": "https://github.com/ManualForArchipelago/Manual/raw/main/schemas/Manual.items.schema.json",
@@ -148,7 +153,7 @@ function generateManualData(dlink, camp, campHash) {
       let occurrence = moduleCounts[module];
       let hasDuplicates = moduleTotals[module] > 1;
       let moduleEntry = items.data.find((entry) => entry.name == module);
-      
+
       if (!moduleEntry) {
         items.data.push({
           name: module,
@@ -157,9 +162,9 @@ function generateManualData(dlink, camp, campHash) {
         });
         moduleEntry = items.data.find((entry) => entry.name == module);
       }
-      
-      if (!moduleEntry.category.includes(`${bombName} Mods`)) {
-        moduleEntry.category.push(`${bombName} Mods`);
+
+      if (!moduleEntry.category.includes(`${bombName} Modules`)) {
+        moduleEntry.category.push(`${bombName} Modules`);
       }
 
       let locationName = `${bombName} - ${module}`;
@@ -169,7 +174,7 @@ function generateManualData(dlink, camp, campHash) {
         name: locationName,
         category: [`${bombName} Checks`],
         region: bombName,
-        requires: `|@${bombName} Mods:ALL|`
+        requires: `|@${bombName} Modules:ALL|`
       });
 
       if (bix == 0) { game["starting_items"][0]["items"].push(module); }
@@ -184,32 +189,37 @@ function generateManualData(dlink, camp, campHash) {
     bomb.forEach(module => {
       moduleName = moduleIdToName(module);
       let moduleEntry = items.data.find((entry) => entry.name == moduleName);
-      moduleEntry.category.push(`${bombName} Mods`);
+      moduleEntry.category.push(`${bombName} Modules`);
 
       locations.data.push({
         name: `${bombName} - ${moduleName}`,
         category: [`${bombName} Checks`],
         region: bombName,
-        requires: `|@${bombName} Mods:ALL|`
+        requires: `|@${bombName} Modules:ALL|`
       });
     });
 
     pushLocationDefused(bombName);
   });
 
-  locations.data.push({
-    name: `All Bombs Defused`,
+  let victoryLocation = {
+    name: `Bomb Quota Reached`,
     category: "Victory",
-    requires: `|@${overall[overall.length - 1]} Defused:ALL|`, //Set to the latest bomb ensures it will be the last check (for 100%)
     victory: true
-  });
+  };
 
-  overall.forEach((bomb, bix) => { 
+  if (options.victoryValue != 0) {
+    victoryLocation["requires"] = `|${nameBomb(true, options.victoryValue - 1)} Defused Event|`;
+  }
+
+  locations.data.push(victoryLocation);
+
+  overall.forEach((bomb, bix) => {
     if (bix == 0) { regions["Tablet"]["connects_to"].push(bomb); }
-      
+
     regions[bomb] = {
       "connects_to": [],
-      "requires": `|@${bomb} Mods:ALL|`
+      "requires": `|@${bomb} Modules:ALL|`
     };
 
     if (bix != overall.length - 1) { regions[bomb]["connects_to"].push(overall[bix + 1]); }
@@ -222,7 +232,7 @@ function generateManualData(dlink, camp, campHash) {
       name: `${bn} Defused`,
       category: [`${bn} Checks`],
       region: bn,
-      requires: `|@${bn} Mods:ALL|`
+      requires: `|@${bn} Modules:ALL|`
     });
     events.data.push({
       name: `${bn} Defused Event`,

@@ -19,49 +19,150 @@
     <p id="appStatus">Please input your profile.</p>
     <table>
         <tr>
-          <th><p class="tiny explain" title="The file containing information on which modules you're familiar with.&#xa;All modules chosen for the campaign will come from enabled modules in your profile.">KTANE Profile</p></th>
+          <th><p class="tiny explain" title="The file containing which modules you're familiar with or are willing to learn.&#xa;All modules chosen for the campaign will come from enabled modules in your profile.">KTANE Profile</p></th>
           <td style="background-color: #999999;"><input type="file" accept="application/json" id="profileInput"/></td>
           <th><p class="tiny explain" title="Check this box to include vanilla modules.">Add vanillas?</p></th>
-          <td><input onchange="vanillasToggle()" id="vanillasCheck" type="checkbox" disabled unchecked></td>
+          <td><input onchange="vanillasToggle()" id="vanillasCheck" class="normalCheckbox" type="checkbox" disabled unchecked></td>
           <!--
           <th><p class="tiny explain" title="Check this box to include needy modules from your profile.">Use needies?</p></th>
           <td><input onchange="needyToggle()" id="neediesCheck" type="checkbox" disabled unchecked></td>
           -->
         </tr>
         <tr>
-          <th><p class="tiny explain" title="Comma separated numbers that dictate the number of modules per bomb.&#xa;Any sequence of non-negative numbers is valid.">Module Counts</p></th>
-          <td><input id="moduleCounts" type="text"><p id="bombTotal" class="tiny">(12 bombs, 53 modules total)</p></td>
+          <th><p class="tiny explain" title="Comma separated numbers that dictate the number of modules per bomb.&#xa;Any sequence of non-negative numbers is valid.&#xa;Use the dropdown for curated options.&#xa;The counts will only match that of the dropdown option when the button is pressed.">Module Counts</p></th>
+          <td><input id="moduleCounts" type="text" placeholder="(e.g. &quot;1, 2, 3, 4&quot;)"><p id="modCountTotals" class="tiny">(12 bombs, 53 modules total)</p></td>
+          <td><select id="modCountDropdown"><option>None</option></select><button id="modCountButton" onclick="setPreset()">Select Preset</button></td>
         </tr>
         <tr>
-          <th><p class="tiny explain" title="The number used to 'randomly' generate your campaign.&#xa;So long as you ensure the all parameters match, not just the seed, the generated campaign will be the same.">Seed Value</p></th>
-          <td><input id="seedValue" type="text"> <button id="random">Randomize</button> <button id="setToDate">Set to date</button> </td>
+          <th><p class="tiny explain" title="Dictates how the bombs in the campaign behave.&#xa;&#xa;Normal: When you strike the timer speeds up.&#xa;Steady: Striking modules yields a fixed time penalty.&#xa;Time: Solving and striking modules adjusts the timer based on module difficulty.&#xa;Zen: Timer moves up instead of down. Cannot detonate.">Mode</p></th>
+          <td><select id="modeDropdown"><option>Normal</option><option>Steady</option><option>Time</option><option>Zen</option></select></td>
+          <td><p id="modeDemo" class="small" style="position: relative; left: -300px; bottom: -5px; width: 70px; background-color: black; color: red;">00:00</p></td>
+        </tr>
+        <tr>
+          <th><p class="tiny explain" title="Modifies the specifics of the rules and data in the manual pages.&#xa;Requires the Rule Seed Modifier mod.&#xa;&#xa;You can specify the rule seed number using the text field.">Rule Seed</p></th>
+          <td><input id="ruleseedCheckbox" class="normalCheckbox" type="checkbox"> <input disabled id="ruleseedNumber" type="number" min="2" max="2147483647"> <button disabled id="ruleseedRandom">Randomize</button></td>
+          <th><p class="tiny explain" title="If this box is checked, the rule seed will be changed on a per bomb basis.">Chaos?</p></th>
+          <td><input disabled id="chaosCheckbox" class="normalCheckbox" type="checkbox"></td>
+        </tr>
+        <tr>
+          <th><p class="tiny explain" title="The amount of time, in minutes, you get to solve one module on a bomb.&#xa;The total time on each bomb is proportional to the number of modules present on the bomb.">Time Scale</p></th>
+          <td><input id="timeSlider" type="range" min="0.5" max="60" step="0.5" style="width:370px;"></td>
+          <td><p id="timeValue" class="small">2:00</p></td>
+        </tr>
+        <tr>
+          <th><p class="tiny explain" title="The number of mistakes you can make before each bomb detonates.">Strikes</p></th>
+          <td><input id="strikesNumber" type="number" min="1" max="999999999"></td>
+          <th><p class="tiny explain" title="Enable random events that distract the defuser, namely the alarm clock beeping and the lights turning off.">Pacing Events</p></th>
+          <td><input id="pacingCheckbox" class="normalCheckbox" type="checkbox"></td>
+          <th><p class="tiny explain" title="Force all modules to spawn on the same side of the bomb as the timer.">Front Face Only</p></th>
+          <td><input id="frontCheckbox" class="normalCheckbox" type="checkbox"></td>
+        </tr>
+        <tr>
+          <th><p class="tiny explain" title="The number of elements that appear on the side of the bomb casing.&#xa;This excludes the serial number.">Widgets</p></th>
+          <td><input id="widgetSlider" type="range" min="0" max="11"></td>
+          <th><p class="tiny explain" title="Have bomb's the widgets and serial number visible at the top of the screen at all times.">Edgework HUD</p></th>
+          <td><input id="edgeworkHudCheckbox" class="normalCheckbox" type="checkbox"></td>
+          <th><p class="tiny explain" title="Have the bomb's timer, strike count, solve count, and pace percentage visible at the top of the screen at all times.&#xa;Selecting &quot;Partial&quot; only shows strike count and pace.">Bomb HUD</p></th>
+          <td><select id="bombHudDropdown"><option>Off</option><option>Partial</option><option>On</option></select></td>
+        </tr>
+        <tr>
+          <th><p class="tiny explain" title="The room in which you disarm the bomb in.&#xa;Requires the corresponding room mod.&#xa;Note that extra gameplay may be added which is not accounted for by Custom Campaign.">Room</p></th>
+          <td><select id="roomDropdown"></select> <button id="roomRandom">Randomize</button> <a id="roomLink" class="blue" style="position: relative; top: 4px; visibility: hidden;">Link</a></td>
+          <td><p id="widgetNumber" class="small" style="position: relative; left: -220px; bottom: 37px;">5</p></td>
+        </tr>
+        <tr>
+          <th><p class="tiny explain" title="The value used to 'randomly' generate your campaign.&#xa;So long as you ensure the all your settings match, not just the seed, the generated campaign will be the same.&#xa;You can use either of the buttons to generate seeds if you prefer.">Generator Seed</p></th>
+          <td><input id="seedValue" type="text"> <button id="seedRandom">Randomize</button> <button id="setToDate">Set to date</button> </td>
         </tr>
     </table>
     <button id="generateCampaign" class="big">Generate Campaign</button>
     <div id="campaign"></div>
-    <div class="apCheck"> <p>Archipelago Mode</p> <input onclick="apToggle()" type="checkbox" class="checkbox" id="apCheckbox" style="margin-left: 6em;"></div>
+    <div class="apCheck"> <p>Archipelago Mode</p> <input onclick="apToggle()" type="checkbox" class="bigCheckbox" id="apCheckbox" style="margin-left: 6em;"></div>
     <a id="infoDoc" class="tiny infoDoc" href="https://blananas2.github.io/ktane-CustomCampaign/">Information Page</a>
     <a id="version" class="tiny version" href="https://github.com/Blananas2/ktane-CustomCampaign/commits/main/">version name-0</a>
   </body>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src='apfilegen.js'></script>
   <script>
-    const CUSTOM_CAMPAIGN_VERSION = "alfa-8";
+    const CUSTOM_CAMPAIGN_VERSION = "alfa-9";
 
-    const rpsDiv = document.getElementById("restorePreviousSession");
-    const apCheckbox = document.getElementById("apCheckbox");
-    const appStatus = document.getElementById("appStatus");
-    const profileInput = document.getElementById("profileInput");
-    const vanillaCheckbox = document.getElementById("vanillasCheck");
-    const modCountField = document.getElementById("moduleCounts");
-    const seedValueField = document.getElementById("seedValue");
-    const randomButton = document.getElementById("random");
-    const setToDateButton = document.getElementById("setToDate");
-    const generateCampaignButton = document.getElementById("generateCampaign");
-    const campaignDiv = document.getElementById("campaign");
-    const versionNumber = document.getElementById("version");
+    const rpsDiv = getId("restorePreviousSession");
+    const apCheckbox = getId("apCheckbox");
+    const appStatus = getId("appStatus");
+    const profileInput = getId("profileInput");
+    const vanillaCheckbox = getId("vanillasCheck");
+    const modCountField = getId("moduleCounts");
+    const modCountDropdown = getId("modCountDropdown");
+    const modCountButton = getId("modCountButton");
+    const modeDropdown = getId("modeDropdown");
+    const modeDemo = getId("modeDemo");
+    const ruleseedCheckbox = getId("ruleseedCheckbox");
+    const ruleseedNumber = getId("ruleseedNumber");
+    const ruleseedRandom = getId("ruleseedRandom");
+    const timeSlider = getId("timeSlider");
+    const timeValue = getId("timeValue");
+    const chaosCheckbox = getId("chaosCheckbox");
+    const strikesNumber = getId("strikesNumber");
+    const widgetSlider = getId("widgetSlider");
+    const widgetNumber = getId("widgetNumber");
+    const pacingCheckbox = getId("pacingCheckbox");
+    const frontCheckbox = getId("frontCheckbox");
+    const edgeworkHudCheckbox = getId("edgeworkHudCheckbox");
+    const bombHudDropdown = getId("bombHudDropdown");
+    const roomDropdown = getId("roomDropdown");
+    const roomLink = getId("roomLink");
+    const roomRandom = getId("roomRandom");
+    const seedValueField = getId("seedValue");
+    const seedRandom = getId("seedRandom");
+    const setToDateButton = getId("setToDate");
+    const generateCampaignButton = getId("generateCampaign");
+    const campaignDiv = getId("campaign");
+    const versionNumber = getId("version");
 
-    const NATO = [ "Alfa", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliett", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "X-ray", "Yankee", "Zulu" ];
+    const NATO = [ "Alfa", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot", "Golf", "Hotel", "India", "Juliett", "Kilo", "Lima", "Mike", "November", "Oscar", "Papa", "Quebec", "Romeo", "Sierra", "Tango", "Uniform", "Victor", "Whiskey", "Xray", "Yankee", "Zulu" ];
+    const MOD_COUNT_PRESETS = [
+      { name: "Minor Vanilla (16)", numbers: "3, 3, 6, 4, 3, 3, 3, 4, 5, 5, 6, 6, 6, 5, 6, 8" },
+      { name: "Major Vanilla (24)", numbers: "3, 3, 6, 4, 3, 3, 3, 4, 5, 5, 5, 8, 6, 5, 6, 6, 6, 8, 4, 6, 4, 8, 4, 11" },
+      { name: "World Vanilla (32)", numbers: "3, 3, 6, 4, 3, 3, 3, 4, 5, 5, 5, 8, 6, 5, 6, 6, 6, 8, 4, 6, 4, 6, 4, 8, 8, 11, 5, 11, 8, 6, 9, 11" },
+      { name: "Minor Krow's (45)", numbers: "5, 6, 6, 6, 6, 7, 8, 4, 11, 5, 6, 6, 6, 6, 7, 7, 8, 11, 5, 6, 6, 6, 6, 7, 8, 4, 11, 6, 7, 7, 7, 7, 7, 8, 9, 11, 6, 7, 7, 7, 7, 8, 9, 5, 11" },
+      { name: "Major Krow's (72)", numbers: "5, 6, 6, 6, 6, 7, 8, 4, 11, 5, 6, 6, 6, 6, 7, 7, 8, 11, 5, 6, 6, 6, 6, 7, 8, 4, 11, 6, 7, 7, 7, 7, 7, 8, 9, 11, 6, 7, 7, 7, 7, 8, 9, 5, 11, 6, 7, 7, 7, 7, 11, 8, 9, 11, 7, 8, 8, 8, 8, 9, 10, 6, 11, 7, 8, 8, 8, 8, 11, 9, 10, 11" },
+      { name: "World Krow's (90)", numbers: "5, 6, 6, 6, 6, 7, 8, 4, 11, 5, 6, 6, 6, 6, 7, 7, 8, 11, 5, 6, 6, 6, 6, 7, 8, 4, 11, 6, 7, 7, 7, 7, 7, 8, 9, 11, 6, 7, 7, 7, 7, 8, 9, 5, 11, 6, 7, 7, 7, 7, 11, 8, 9, 11, 7, 8, 8, 8, 8, 9, 10, 6, 11, 7, 8, 8, 8, 8, 11, 9, 10, 11, 7, 8, 8, 8, 8, 9, 10, 6, 11, 9, 10, 10, 11, 11, 11, 11, 11, 11" }
+    ];
+    const ROOMS = [
+      { name: "Default", id: "default", steam: "(none)" },
+      { name: "8", id: "eightroom", steam: "3424685293" },
+      { name: "Baby Game", id: "babygameroom", steam: "3423871121" },
+      { name: "Ball Pit", id: "ballpitroom", steam: "2420637495" },
+      { name: "Birthday Room", id: "birthdaygameplayroom", steam: "3289882706" },
+      { name: "Bomb Corp Office", id: "bombcorpoffice", steam: "2348910819" },
+      { name: "Bomb Room", id: "gameplay", steam: "1226727476" },
+      { name: "The Bus That Couldn't Slow Down", id: "busgameplayroom", steam: "736942850" },
+      { name: "Button Heaven", id: "buttonheaven", steam: "3471896077" },
+      { name: "de_dust2", id: "de_dust2", steam: "3412760160" },
+      { name: "Factory", id: "factoryroom", steam: "1307301431" },
+      { name: "Five Nights at Freddy's", id: "fnafgameplayroom", steam: "2499847274" },
+      { name: "Games Arcade", id: "arcaderoom", steam: "1617747695" },
+      { name: "Green Screen", id: "green_screen", steam: "2173657887" },
+      { name: "Hypnosis", id: "examplegameplayroom", steam: "2425768438" },
+      { name: "The Infinity Room", id: "infinity_room", steam: "2425212862" },
+      { name: "Jet Set", id: "ieytdjet", steam: "3539842250" },
+      { name: "The Meeting Room", id: "stanleymeetingroom", steam: "3422678217" },
+      { name: "Mind Control Facility", id: "stanleymonitorroom", steam: "3471896613" },
+      { name: "Minecraft Gameplay Room", id: "minecraftroom", steam: "3308044257" },
+      { name: "Module Assembly Station", id: "moduleassemblystation", steam: "1279095269" },
+      { name: "Module Assembly Station V2", id: "stationv2", steam: "2962102613" },
+      { name: "Portal Gameplay Room", id: "portal_room", steam: "969128362" },
+      { name: "Saw Gameplay Room", id: "sawroom", steam: "3317556728" },
+      { name: "Screensavers Room", id: "screensaversroom", steam: "3310714304" },
+      { name: "Serious Room", id: "seriousroom", steam: "3411127444" },
+      { name: "Setup Gameplay Room", id: "setupgameplayroom", steam: "3304288317" },
+      { name: "Skeld", id: "skeld", steam: "3346954174" },
+      { name: "Stanley's Countdown", id: "stanleycountdownroom", steam: "3421467923" },
+      { name: "Stanley's Office", id: "stanleyroom", steam: "3405994085" },
+      { name: "Subway Simulator", id: "tdssubwayroom", steam: "2429758090" },
+      { name: "TMP Gameplay Room", id: "tmpgameplayroom", steam: "2409797804" },
+      { name: "Tutorial Gameplay Room", id: "tutorialgameplayroom", steam: "2392324150" }
+    ];
     let apMode = apCheckbox.checked;
     let repoFetched = false;
     let ktaneJson;
@@ -69,7 +170,7 @@
     let jsonValidated = false;
     let profileModules;
     let vanillasRequested = false;
-
+    let countPresetSet = true;
     let campaign;
     let freeplay = null;
     let overall;
@@ -79,80 +180,137 @@
     let furthestBomb;
 
     window.addEventListener("pageshow", () => {
+      versionNumber.innerHTML = `version ${CUSTOM_CAMPAIGN_VERSION}`;
+
+      for (let p = 0; p < MOD_COUNT_PRESETS.length; p++) {
+        let opt = el("option", {
+          value: p,
+          innerHTML: MOD_COUNT_PRESETS[p].name,
+          title: MOD_COUNT_PRESETS[p].numbers
+        });
+        modCountDropdown.appendChild(opt);
+      }
+
+      for (let r = 0; r < ROOMS.length; r++) {
+        let opt = el("option", {
+          value: ROOMS[r].steam,
+          innerHTML: ROOMS[r].name,
+          title: ROOMS[r].id
+        });
+        roomDropdown.appendChild(opt);
+      }
+
       profileInput.value = "";
       vanillaCheckbox.disabled = true;
       vanillaCheckbox.checked = false;
+      modCountDropdown.value = "0";
+      setPreset(0);
+      modeDropdown.value = "Normal";
+      ruleseedCheckbox.checked = false;
+      ruleseedNumber.value = "4275";
+      ruleseedNumber.disabled = true;
+      ruleseedRandom.disabled = true;
+      timeSlider.value = "2";
+      chaosCheckbox.disabled = true;
+      chaosCheckbox.checked = false;
+      strikesNumber.value = "5";
+      seedValueField.value = RNG(4294967296);
+      widgetSlider.value = "5";
+      pacingCheckbox.checked = false;
+      frontCheckbox.checked = false;
+      edgeworkHudCheckbox.checked = false;
+      bombHudDropdown.value = "Off";
+
+      fetchRepoData();
     });
 
     function apToggle() { apMode = apCheckbox.checked; }
-    function vanillasToggle() { 
-      vanillasRequested = vanillaCheckbox.checked; 
-      if (vanillasRequested) {
-        profileModules.push("BigButton", "Venn", "Keypad", "Maze", "Memory", "Morse", "Password", "Simon", "WhosOnFirst", "WireSequence", "Wires");
-      } else {
-        profileModules.splice(profileModules.length - 11, 11);
-      }
-      appStatus.textContent = `Profile contains ${profileModules.length} enabled modules.`;
-    }
-
-    modCountField.value = "3, 3, 6, 4, 3, 3, 3, 4, 5, 5, 6, 8"; //Based on first 3 sections in vanilla
-    seedValueField.value = RNG(4294967296);
-
-    versionNumber.innerHTML = `version ${CUSTOM_CAMPAIGN_VERSION}`;
-
-    fetchRepoData();
 
     async function fetchRepoData() {
-      let request = await fetch("https://ktane.timwi.de/json/raw");
-      ktaneJson = JSON.parse(await request.text()).KtaneModules;
+      try {
+        let request = await fetch("https://ktane.timwi.de/json/raw");
+        if (!request.ok) { throw new Error(`Request status: ${request.status}`); }
 
-      ktaneJson.forEach(entry => {
-        if ((entry.Type === "Regular" || entry.Type === "Needy")) {
-          ktaneModules.push([entry.ModuleID, entry.Name]);
-        }
-      });
+        ktaneJson = JSON.parse(await request.text()).KtaneModules;
 
-      repoFetched = true;
-      document.getElementById("repoWait").remove();
-      checkLocalStorage();
+        ktaneJson.forEach(entry => {
+          if ((entry.Type === "Regular" /* || entry.Type === "Needy" */)) { //Needies are treated no differently from regulars which results in bad generation. This'll be remedied later
+            ktaneModules.push({ id: entry.ModuleID, name: entry.Name });
+          }
+        });
+
+        repoFetched = true;
+        getId("repoWait").remove();
+        checkLocalStorage();
+      } catch (err) {
+        getId("repoWait").textContent = "Could not connect to the Repository of Manual Pages.";
+        appStatus.textContent = err;
+        document.body.style.backgroundColor = "#000000";
+      }
     }
 
     function checkLocalStorage() {
       if (localStorage.getItem("Seed value")) {
-        let rpsButton = document.createElement("button");
-        rpsButton.addEventListener("click", (event) => { retrieveLocalStorage(); });
-        rpsButton.innerText = `Restore Previous ${localStorage.getItem("Archipelago mode") == "true" ? "(Archipelago) " : ""}Session`;
-        rpsButton.classList.add("big");
-        rpsDiv.appendChild(rpsButton);
-        let dismissButton = document.createElement("button");
-        dismissButton.addEventListener("click", (event) => {
+        let rpsButton = el("button", {
+          innerText: `Restore Previous ${noFalse(localStorage.getItem("Archipelago mode") == "true", "(Archipelago) ")}Session`,
+          class: "big"
+        });
+        rpsButton.addEventListener("click", () => { retrieveLocalStorage(); });
+
+        let dismissButton = el("button", {
+          innerText: "Dismiss and Delete",
+          style: "margin-left: 12px;"
+        });
+        dismissButton.addEventListener("click", () => {
           localStorage.clear();
           rpsDiv.innerHTML = "";
           if (appStatus.textContent == "Click the above button to restore previous session info.") { appStatus.textContent = "Please input a profile." }
         });
-        dismissButton.innerText = "Dismiss and Delete";
-        dismissButton.style = "margin-left: 12px;";
+
+        rpsDiv.appendChild(rpsButton);
         rpsDiv.appendChild(dismissButton);
+
         appStatus.textContent = "Click the above button to restore previous session info.";
       }
     }
 
     function retrieveLocalStorage() {
       apMode = localStorage.getItem("Archipelago mode") == "true";
-      profileModules = JSON.parse(localStorage.getItem("Profile-enabled modules"))
+      profileModules = JSON.parse(localStorage.getItem("Profile-enabled modules"));
+      vanillaCheckbox.checked = localStorage.getItem("Vanilla enabled") == "true";
       modCountField.value = localStorage.getItem("Module counts");
+      modCountDropdown.value = localStorage.getItem("Module counts preset");
+      modeDropdown.value = localStorage.getItem("Bomb mode");
+      ruleseedCheckbox.checked = localStorage.getItem("Rule seed enabled") == "true";
+      ruleseedNumber.value = localStorage.getItem("Rule seed number");
+      chaosCheckbox.checked = localStorage.getItem("Rule seed chaos") == "true";
+      timeSlider.value = localStorage.getItem("Time scale");
+      strikesNumber.value = localStorage.getItem("Strikes number");
+      widgetSlider.value = localStorage.getItem("Widgets number");
+      pacingCheckbox.checked = localStorage.getItem("Pacing events") == "true";
+      frontCheckbox.checked = localStorage.getItem("Front face only") == "true";
+      edgeworkHudCheckbox.checked = localStorage.getItem("Edgework HUD") == "true";
+      bombHudDropdown.value = localStorage.getItem("Bomb HUD");
+      roomDropdown.value = localStorage.getItem("Room");
       seedValueField.value = localStorage.getItem("Seed value");
       campaign = JSON.parse(localStorage.getItem("Generated campaign"));
       try { freeplay = JSON.parse(localStorage.getItem("Generated freeplay"));
       } catch { freeplay = null; }
       furthestBomb = localStorage.getItem("Furthest bomb");
 
+      apCheckbox.checked = apMode;
       vanillaCheckbox.disabled = false;
       if (profileModules.includes("Venn")) { 
         vanillaCheckbox.checked = true;
         vanillasRequested = true;
       }
-      apCheckbox.checked = apMode;
+      modCountButton.disabled = modCountDropdown.value == "None";
+      let ruleseedChangable = !ruleseedCheckbox.checked || chaosCheckbox.checked;
+      ruleseedNumber.disabled = ruleseedChangable;
+      ruleseedRandom.disabled = ruleseedChangable;
+      chaosCheckbox.disabled = !ruleseedCheckbox.checked;
+      modeUpdates();
+
       createDMGStrings();
       if (apMode) {
         calculateLogicPath(); 
@@ -160,12 +318,12 @@
       } else {
         visualizeCampaign(true); 
       }
-      appStatus.textContent = `Restored campaign from profile with ${profileModules.length} enabled modules.`;
+      appStatus.textContent = `Restored campaign from profile "${localStorage.getItem("Profile filename")}" with ${profileModules.length} enabled modules.`;
       rpsDiv.innerHTML = "";
     }
 
-    profileInput.addEventListener("change", (event) => {
-      const file = event.target.files[0];
+    profileInput.addEventListener("change", (ev) => {
+      const file = ev.target.files[0];
 
       if (!file) return;
 
@@ -182,8 +340,9 @@
 
     function checkJson(file) {
       if (Object.hasOwn(file, "Operation") && Object.hasOwn(file, "EnabledList")) {
-        profileModules = file.EnabledList;
-        appStatus.textContent = `Profile contains ${profileModules.length} enabled modules.`;
+        let repoIds = new Set(ktaneModules.map(m => m.id)); //Only allow modules on the repo.
+        profileModules = file.EnabledList.filter(m => repoIds.has(m));
+        appStatus.textContent = `Profile contains ${profileModules.length} enabled module${noFalse(profileModules.length !== 1, "s")}.`;
         jsonValidated = profileModules.length > 0;
         vanillaCheckbox.disabled = false;
       } else if (Object.hasOwn(file, "Operation") && Object.hasOwn(file, "DisabledList")) {
@@ -195,68 +354,162 @@
       }
     }
 
-    modCountField.addEventListener("input", (event) => {
-      let moduleTotal = sum(modCountField.value.replaceAll(/\s/g, "").split(',').map((v) => isNaN(Number.parseInt(v)) ? 0 : Number.parseInt(v)));
-      document.getElementById("bombTotal").innerText = `(${modCountField.value.split(',').length} bombs, ${moduleTotal} modules total)`;
+    function vanillasToggle() { 
+      vanillasRequested = vanillaCheckbox.checked; 
+      if (vanillasRequested) {
+        profileModules.push("BigButton", "Venn", "Keypad", "Maze", "Memory", "Morse", "Password", "Simon", "WhosOnFirst", "WireSequence", "Wires");
+      } else {
+        profileModules.splice(profileModules.length - 11, 11);
+      }
+      appStatus.textContent = `Profile contains ${profileModules.length} enabled modules.`;
+    }
+
+    modCountField.addEventListener("input", () => {
+      modCountDropdown.value = "None";
+      modCountButton.disabled = true;
+      showCampaignNumbers();
     });
 
-    randomButton.addEventListener("click", (event) => {
-      seedValueField.value = RNG(4294967296);
+    modCountDropdown.addEventListener("input", () => { 
+      modCountButton.disabled = modCountDropdown.value == "None";
+      countPresetSet = false;
     });
 
-    setToDateButton.addEventListener("click", (event) => {
+    function setPreset() {
+      let presetIndex = Number.parseInt(modCountDropdown.value);
+      if (!isNaN(presetIndex)) { 
+        modCountField.value = MOD_COUNT_PRESETS[presetIndex].numbers;
+        showCampaignNumbers();
+      }
+      countPresetSet = true;
+    }
+
+    function showCampaignNumbers() {
+      let moduleTotal = sum(modCountField.value.replaceAll(/\s/g, "").split(',').map(v => isNaN(Number.parseInt(v)) ? 0 : Number.parseInt(v)));
+      let bombTotal = modCountField.value.split(',').length;
+      getId("modCountTotals").innerText = `(${bombTotal} bomb${noFalse(bombTotal !== 1, "s")}, ${moduleTotal} module${noFalse(moduleTotal !== 1, "s")} total)`;
+    }
+
+    modeDropdown.addEventListener("change", () => { modeUpdates(); });
+
+    function modeUpdates() {
+      strikesNumber.disabled = ["Zen", "Time"].includes(modeDropdown.value);
+      timeSlider.disabled = modeDropdown.value == "Zen";
+      let color;
+      switch (modeDropdown.value) {
+        case "Normal": color = "red"; break;
+        case "Steady": color = "green"; break;
+        case "Time": color = "orange"; break;
+        case "Zen":  color = "cyan"; break;
+      }
+      modeDemo.style = `position: relative; left: -300px; bottom: -5px; width: 70px; background-color: black; color: ${color}`;
+    }
+
+    ruleseedCheckbox.addEventListener("change", () => {
+      let status = ruleseedCheckbox.checked;
+      ruleseedNumber.disabled = !status;
+      ruleseedRandom.disabled = !status;
+      chaosCheckbox.disabled = !status;
+      widgetSlider.max = 11 - status;
+      updateWidgetNumber();
+      if (!status) { chaosCheckbox.checked = false; }
+    });
+
+    ruleseedRandom.addEventListener("click", () => { ruleseedNumber.value = RNG(9998) + 2; });
+
+    chaosCheckbox.addEventListener("change", () => {
+      let status = chaosCheckbox.checked;
+      ruleseedNumber.disabled = status;
+      ruleseedRandom.disabled = status;
+    });
+
+    timeSlider.addEventListener("input", () => { 
+      let time = Number.parseFloat(timeSlider.value) * 60;
+      timeValue.innerText = `${(time / 60) | 0}:${(time % 60).toString().padStart(2, "0")}`;
+    });
+
+    widgetSlider.addEventListener("input", () => { updateWidgetNumber(); });
+
+    function updateWidgetNumber() { widgetNumber.innerText = `${widgetSlider.value}`; }
+
+    roomDropdown.addEventListener("change", () => { updateRoomLink(); });
+
+    roomRandom.addEventListener("click", () => { 
+      roomDropdown.value = ROOMS[RNG(ROOMS.length)].steam;
+      updateRoomLink();
+    });
+
+    function updateRoomLink() { roomLink.style = `position: relative; top: 4px;${noFalse(roomDropdown.value == "(none)", "visibility: hidden;")}`; }
+
+    roomLink.addEventListener("click", () => { window.open(`https://steamcommunity.com/sharedfiles/filedetails/?id=${roomDropdown.value}`, "mozillaTab"); });
+
+    seedRandom.addEventListener("click", () => { seedValueField.value = RNG(4294967296); });
+
+    setToDateButton.addEventListener("click", () => {
       let now = new Date();
-      seedValueField.value = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2, "0")}${now.getDate().toString().padStart(2, "0")}`;
+      seedValueField.value = `${now.getFullYear()}-${(now.getMonth()+1).toString().padStart(2, "0")}-${now.getDate().toString().padStart(2, "0")}`;
     });
 
-    generateCampaignButton.addEventListener("click", (event) => {
-      if (jsonValidated && repoFetched) {
-        if (generatedPreviously) {
-          if (!window.confirm("Are you sure you want to generate another campaign? The current campaign will be overwritten.")) { return; }
+    generateCampaignButton.addEventListener("click", () => {
+      if (generatedPreviously) {
+        if (!window.confirm("Are you sure you want to generate another campaign? The current campaign will be overwritten.")) { return; }
+      }
+
+      if (!(jsonValidated && repoFetched)) { appStatus.textContent = "Can't generate without a KTANE profile."; return; }
+
+      rpsDiv.innerHTML = "";
+
+      let countsString = modCountField.value;
+      
+      if (!countsString.match(/^\d+(,\s*\d+)*$/)) { appStatus.textContent = "Can't parse the module counts."; return; }
+
+      countsString = countsString.replaceAll(/\s/g, "").split(',');
+
+      if (ruleseedCheckbox.checked && !chaosCheckbox.checked) {
+        let ruleseed = Number.parseInt(ruleseedNumber.value);
+        if (ruleseed < 2 || ruleseed > 2147483647) { appStatus.textContent = "Rule Seed number outside of the acceptable range."; return; }
+      }
+
+      if (modeDropdown.value == "Normal" || modeDropdown.value == "Steady") {
+        let strikes = Number.parseInt(strikesNumber.value);
+        if (strikes < 1 || strikes > 999999999) { appStatus.textContent = "Strikes number outside of the acceptable range."; return; }
+      }
+
+      if (modeDropdown.value != "Zen") {
+        if (countsString.find(v => Number.parseInt(v) * Number.parseFloat(timeSlider.value) > 500)) { appStatus.textContent = "One or more bombs has too high a time limit."; return; }
+      }
+
+      campaign = [];
+
+      let seed = stringToSeed(seedValueField.value);
+      let PRNG = mulberry32(seed);
+
+      countsString.forEach(number => {
+        let bomb = [];
+        for (let n = 0; n < number; n++) {
+          bomb.push(profileModules[PRNG(profileModules.length)]);
         }
-        rpsDiv.innerHTML = "";
-
-        let countsString = modCountField.value;
-        if (countsString.match(/^\d+(,\s*\d+)*$/)) {
-          campaign = [];
-
-          let seed = stringToSeed(seedValueField.value);
-          let PRNG = mulberry32(seed);
-
-          let actualBombs = 0;
-          countsString = countsString.replaceAll(/\s/g, "").split(',');
-          countsString.forEach(number => {
-            let bomb = [];
-            for (let n = 0; n < number; n++) {
-              bomb.push(profileModules[PRNG(profileModules.length)]);
-            }
-            campaign.push(bomb);
-            if (number > 0) { actualBombs++ }
-          });
-          if (apMode) { 
-            if (actualBombs < 2) {
-              appStatus.textContent = "Campaign should have at least 2 bombs.";
-              return;
-            }
-            calculateLogicPath(); 
-          };
-          createDMGStrings();
-          if (apMode) { 
-            archipelagoSetup(); 
-          } else { 
-            visualizeCampaign(false); 
-          }
-          bulkSetLocalStorage();
-          generatedPreviously = true;
-        } else { appStatus.textContent = "Can't parse the module counts."; }
-      } else { appStatus.textContent = "Can't generate without a KTANE profile."; }
+        campaign.push(bomb);
+      });
+      if (apMode) { 
+        calculateLogicPath(); 
+      };
+      createDMGStrings();
+      if (apMode) { 
+        archipelagoSetup(); 
+      } else { 
+        visualizeCampaign(false); 
+      }
+      bulkSetLocalStorage();
+      generatedPreviously = true;
+      appStatus.textContent = "Campaign generation complete."
     });
 
     function calculateLogicPath() {
       freeplay = [];
       overall = [ nameBomb(true, 0) ];
-      let noDupes = campaign.map((bomb) => [...new Set(bomb)]);
-      let checkTotals = campaign.map((bomb) => bomb.length + 1);
+      let noDupes = campaign.map(bomb => [...new Set(bomb)]);
+      let checkTotals = campaign.map(bomb => bomb.length + 1);
       let stripped = [...noDupes];
 
       let modulesInLogic = noDupes[0];
@@ -265,7 +518,7 @@
 
       while (bombOrder.length < campaign.length) {
         let logicSet = new Set(modulesInLogic);
-        stripped = stripped.map((bomb) => bomb.filter((mod) => !logicSet.has(mod)));
+        stripped = stripped.map(bomb => bomb.filter(mod => !logicSet.has(mod)));
 
         let belowThresh = stripped.findIndex((bomb, ix) => (!bombOrder.includes(ix)) && (bomb.length <= checksToSpend));
         if (belowThresh != -1) {
@@ -310,9 +563,20 @@
     }
 
     function createDMGStrings() {
+      let bombMode = modeDropdown.value.toLowerCase();
+      let ruleseed = noFalse(ruleseedCheckbox.checked, chaosCheckbox.checked ? "ruleseed:random" : `ruleseed:${ruleseedNumber.value}`);
+      let strikes = noFalse(strikesNumber.value != "3", `${strikesNumber.value}X`);
+      let widgets = noFalse(widgetSlider.value != "5", `widgets:${widgetSlider.value}`);
+      let qolLine = spaceSeparate([ noFalse(!pacingCheckbox.checked, "nopacing"), noFalse(frontCheckbox.checked, "frontonly"), noFalse(edgeworkHudCheckbox.checked, "edgework:on"), noFalse(bombHudDropdown.value != "Off", `hud:${bombHudDropdown.value.toLowerCase()}`) ]);
+      let roomLine = noFalse(roomDropdown.value != "(none)", `\nroom:${ROOMS.find(r => r.steam == roomDropdown.value).id}` );
+      
+      let middleBit = `\n${qolLine}${roomLine}\n\n`;
+
       dmgStrings = [[], []];
       campaign.forEach((bomb, ix) => {
-        let dmgString = `////${nameBomb(true, ix)}\n\nmode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
+        let dmgString = `////${nameBomb(true, ix)}\n`;
+        dmgString += setupLine(bomb.length);
+        dmgString += middleBit;
         dmgString += nameOrder(bomb).join("\n");
         dmgStrings[0].push(dmgString);
       });
@@ -328,13 +592,21 @@
                         `${friendlyModlist}`,
                         `******************************************************************/`
                         ].join('\n');
-          dmgString += `\nmode:normal nopacing ${(bomb.length)*2}:00 5X\n\n`;
+          dmgString += setupLine(bomb.length);
+          dmgString += middleBit;
           dmgString += idsNameSorted.join("\n");
           dmgStrings[1].push(dmgString);
         });
       }
 
+      function setupLine(bl) { return spaceSeparate([ noFalse(bombMode != "normal", `mode:${bombMode}`), ruleseed, timeAndStrikes(bl), widgets ]); }
+      function timeAndStrikes(len) {
+        if (bombMode == "zen") { return ""; }
+        let time = len * Number.parseFloat(timeSlider.value) * 60;
+        return spaceSeparate([ `${(time / 60) | 0}:${(time % 60).toString().padStart(2, "0")}`, noFalse(bombMode != "time", strikes) ]);
+      }
       function nameOrder(barr) { return [...barr].sort((x, y) => moduleIdToName(x).localeCompare(moduleIdToName(y))); }
+      function spaceSeparate(arr) { return arr.filter(s => s !== "").join(" "); }
     }
 
     function visualizeCampaign(restored) {
@@ -343,60 +615,62 @@
       bombDivs = [];
 
       campaign.forEach((bomb, ix) => {
-        let bombDiv = document.createElement("div");
-        let modulesUl = document.createElement("ul");
-        let bombTitle = document.createElement("p");
-        bombDiv.classList.add("bomb");
-        
-        bombTitle.textContent = nameBomb(true, ix);
-        bombTitle.classList.add("bombTitle");
-        bombDiv.appendChild(bombTitle);
-
         let currentTotal = bombDivs.length;
 
-        let dmgButton = document.createElement("button");
-        dmgButton.classList.add("dmgButton");
-        dmgButton.addEventListener("click", () => {
-          writeClipboardText(dmgStrings[0][currentTotal]);
-        });
-        dmgButton.innerText = "Copy DMG String";
-        bombDiv.appendChild(dmgButton);
+        let bombDiv = el("div", {
+          class: "bomb"
+        },
+        [
+          el("p", {
+            textContent: nameBomb(true, ix),
+            class: "bombTitle"
+          }),
+          el("button", {
+            class: "dmgButton",
+            innerText: "Copy DMG String",
+            _click: () => { writeClipboardText(dmgStrings[0][currentTotal]); }
+          })
+        ]);
+        let modulesUl = el("ul");
 
         bomb.forEach(module => {
-          let moduleName = moduleIdToName(module);
-          let moduleLi = document.createElement("li");
-          moduleLi.textContent = moduleName;
+          let moduleLi = el("li", {
+            textContent: moduleIdToName(module)
+          });
           modulesUl.appendChild(moduleLi);
         });
         bombDiv.appendChild(modulesUl);
 
-        let checkbox = document.createElement("input");
-        checkbox.classList.add("checkbox");
-        checkbox.type = "checkbox";
-        if (restored && currentTotal < furthestBomb - 1) { checkbox.checked = true; }
-        checkbox.addEventListener("change", () => {
-          try {
-            if (campaignDiv.getElementsByTagName('div').length == currentTotal + 1) { 
-              campaignDiv.appendChild(bombDivs[currentTotal + 1]);
-              localStorage.setItem("Furthest bomb", currentTotal + 2);
-            } 
-          } catch {
-            document.body.style.backgroundColor = "#1A411A";
-            appStatus.textContent = "Congratulations! Press the button above to clear the session from memory.";
-            let clearButton = document.createElement("button");
-            clearButton.addEventListener("click", () => {
-              localStorage.clear();
-              rpsDiv.innerHTML = "";
-              campaignDiv.innerHTML = "";
-              document.body.style.backgroundColor = "#411A1A";
-              appStatus.textContent = "Previous session data cleared.";
-            });
-            clearButton.innerText = "Clear session data";
-            clearButton.classList.add("big");
-            rpsDiv.appendChild(clearButton);
+        let checkbox = el("input", {
+          class: "bigCheckbox",
+          type: "checkbox",
+          _change: () => {
+            try {
+              if (campaignDiv.getElementsByTagName('div').length == currentTotal + 1) { 
+                campaignDiv.appendChild(bombDivs[currentTotal + 1]);
+                localStorage.setItem("Furthest bomb", currentTotal + 2);
+              } 
+            } catch {
+              document.body.style.backgroundColor = "#1A411A";
+              appStatus.textContent = "Congratulations! Press the button above to clear the session from memory.";
+              let clearButton = el("button", {
+                innerText: "Clear session data",
+                class: "big",
+                _click: () => {
+                  localStorage.clear();
+                  rpsDiv.innerHTML = "";
+                  campaignDiv.innerHTML = "";
+                  document.body.style.backgroundColor = "#411A1A";
+                  appStatus.textContent = "Previous session data cleared.";
+                }
+              });
+              rpsDiv.appendChild(clearButton);
+            }
           }
         });
+
         bombDiv.appendChild(checkbox);
+        if (restored && currentTotal < furthestBomb - 1) { checkbox.checked = true; }
 
         bombDivs.push(bombDiv);
         if (restored) {
@@ -411,119 +685,204 @@
 
     function bulkSetLocalStorage() {
       localStorage.setItem("Archipelago mode", apMode);
+      localStorage.setItem("Profile filename", profileInput.files[0].name);
       localStorage.setItem("Profile-enabled modules", JSON.stringify(profileModules));
+      localStorage.setItem("Vanilla enabled", vanillaCheckbox.checked);
       localStorage.setItem("Module counts", modCountField.value);
+      localStorage.setItem("Module counts preset", countPresetSet ? modCountDropdown.value : "None");
+      localStorage.setItem("Bomb mode", modeDropdown.value);
+      localStorage.setItem("Rule seed enabled", ruleseedCheckbox.checked);
+      localStorage.setItem("Rule seed number", ruleseedNumber.value);
+      localStorage.setItem("Rule seed chaos", chaosCheckbox.checked);
+      localStorage.setItem("Time scale", timeSlider.value);
+      localStorage.setItem("Strikes number", strikesNumber.value);
+      localStorage.setItem("Widgets number", widgetSlider.value);
+      localStorage.setItem("Pacing events", pacingCheckbox.checked);
+      localStorage.setItem("Front face only", frontCheckbox.checked);
+      localStorage.setItem("Edgework HUD", edgeworkHudCheckbox.checked);
+      localStorage.setItem("Bomb HUD", bombHudDropdown.value);
+      localStorage.setItem("Room", roomDropdown.value);
       localStorage.setItem("Seed value", seedValueField.value);
       localStorage.setItem("Generated campaign", JSON.stringify(campaign));
       localStorage.setItem("Generated freeplay", JSON.stringify(freeplay));
     }
 
     function archipelagoSetup() {
-      campaignDiv.innerHTML = "";
-
-      let table = document.createElement("table");
-
-      let slotTr = document.createElement("tr");
-      let slotTh = document.createElement("th");
-      let slotP = document.createElement("p");
-      slotP.innerText = "Slot name";
-      slotP.classList.add("tiny", "explain");
-      slotP.title = "The name you'll use for identifying your slot in the multiworld.\nYour name is sufficient if this is your only game, but if not you must make all your slot names distinct.\nMust be between 1 and 16 characters.";
-      slotTh.appendChild(slotP);
-      let slotTd = document.createElement("td");
-      let slotBox = document.createElement("input");
-      slotBox.type = "text";
-      slotBox.maxLength = 16;
-      slotBox.id = "slotBox";
-      slotTd.appendChild(slotBox);
-      slotTr.appendChild(slotTh);
-      slotTr.appendChild(slotTd);
-      table.appendChild(slotTr);
-
-      let pbTr = document.createElement("tr");
-      let pbTh = document.createElement("th");
-      let pbP = document.createElement("p");
-      pbP.innerText = "Progression Balancing";
-      pbP.classList.add("tiny", "explain");
-      pbP.title = "A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.\nA lower setting means more getting stuck. A higher setting means less getting stuck.\nValues range from 0 to 99.";
-      pbTh.appendChild(pbP);
-      let pbSliderTd = document.createElement("td");
-      let pbSlider = document.createElement("input");
-      pbSlider.type = "range";
-      pbSlider.max = 99;
-      pbSlider.id = "pbSlider";
-      let pbNumTd = document.createElement("td");
-      let pbNum = document.createElement("p");
-      pbNum.innerText = "50";
-      pbNum.classList.add("small");
-      pbSlider.addEventListener("input", () => { pbNum.innerText = pbSlider.value });
-      pbSliderTd.appendChild(pbSlider);
-      pbNumTd.appendChild(pbNum);
-      pbTr.appendChild(pbTh);
-      pbTr.appendChild(pbSliderTd);
-      pbTr.appendChild(pbNumTd);
-      table.appendChild(pbTr);
-
-      let deathlinkTr = document.createElement("tr");
-      let deathlinkTh = document.createElement("th");
-      let deathlinkP = document.createElement("p");
-      deathlinkP.innerText = "Deathlink?";
-      deathlinkP.classList.add("tiny", "explain");
-      deathlinkP.title = "Check this box to enable deathlink.\nIf deathlink is enabled, whenever you explode, everyone else with deathlink dies too!\nOh, and if you recieve a deathlink, detonate your bomb!\nDon't forget to send deathlinks when you explode!";
-      deathlinkTh.appendChild(deathlinkP);
-      let deathlinkTd = document.createElement("td");
-      let deathlinkCheckbox = document.createElement("input");
-      deathlinkCheckbox.type = "checkbox";
-      deathlinkTd.appendChild(deathlinkCheckbox);
-      deathlinkTr.appendChild(deathlinkTh);
-      deathlinkTr.appendChild(deathlinkTd);
-      table.appendChild(deathlinkTr);
-
-      campaignDiv.appendChild(table);
-      let yamlButton = document.createElement("button");
       let campaignHash = stringToSeed(campaign.toString()).toString(16);
-      yamlButton.addEventListener("click", () => {
-        let slotName = document.getElementById("slotBox").value;
-        if (slotName.length == 0) { appStatus.textContent = "Slot name is empty."; return; }
-        if (slotName.match(/^\d+$/g)) { 
-          //If you know more about how this is supported by Manual or Archipelago, please do notify me of the source so this can be changed accordingly
-          if (!window.confirm("Slot names which are entirely numbers tend to cause problems. Would you like to continue anyway?")) { return; }
-        }
-        let options = {
-          deathlink: deathlinkCheckbox.checked,
-          progressionBalancing: pbSlider.value
-        };
-        downloadYAML(slotName, options, campaignHash, CUSTOM_CAMPAIGN_VERSION);
-        localStorage.setItem("Downloaded YAML", true);
-      });
-      yamlButton.innerHTML = "Download YAML";
-      campaignDiv.appendChild(yamlButton);
-      let apworldButton = document.createElement("button");
-      apworldButton.addEventListener("click", () => {
-        let deathlink = deathlinkCheckbox.checked;
-        let namedCampaign = [];
-        campaign.forEach(bomb => {
-          let bombArr = [];
-          bomb.forEach(module => { bombArr.push(moduleIdToName(module)); });
-          namedCampaign.push(bombArr);
-        });
-        downloadApworld(deathlink, namedCampaign, campaignHash);
-      });
-      apworldButton.innerHTML = "Download apworld";
-      campaignDiv.appendChild(apworldButton);
 
-      let dmgDiv = document.createElement("div");
-      let dmgButton = document.createElement("button");
-      dmgButton.addEventListener("click", () => {
-        downloadDMGFiles(campaignHash);
-      });
-      dmgButton.innerText = "Download DMG Missions";
-      dmgButton.classList.add("big");
-      dmgDiv.appendChild(dmgButton)
-      campaignDiv.appendChild(dmgDiv);
+      campaignDiv.innerHTML = "";
+      const VICTORY_DEFAULT = Math.floor(campaign.length * 0.75);
+
+      campaignDiv.appendChild( el("p", { innerText: calculateCheckCounts() }) ); //I'm not *stoked* about how this looks, but since at the time of writing we're still in alfa I don't care
+
+      campaignDiv.appendChild(
+        el("table", {}, [
+          el("tr", {}, [
+            el("th", {}, [
+              el("p", {
+                innerText: "Slot name",
+                class: "tiny explain",
+                title: "The name you'll use for identifying your slot in the multiworld.\nYour name is sufficient if this is your only game, but if not you must make all your slot names distinct.\nMust be between 1 and 16 characters."
+              })
+            ]),
+            el("td", {}, [
+              el("input", {
+                type: "text",
+                maxLength: 16,
+                id: "slotBox"
+              })
+            ])
+          ]),
+          el("tr", {}, [
+            el("th", {}, [
+              el("p", {
+                innerText: "Progression Balancing",
+                class: "tiny explain",
+                title: "A system that can move progression earlier, to try and prevent the player from getting stuck and bored early.\nA lower setting means more getting stuck. A higher setting means less getting stuck.\nValues range from 0 to 99."
+              })
+            ]),
+            el("td", {}, [
+              el("input", {
+                id: "pbSlider",
+                type: "range",
+                class: "range",
+                max: 99
+              })
+            ]),
+            el("td", {}, [
+              el("p", {
+                id: "pbNum",
+                innerText: "50",
+                class: "small"
+              })
+            ])
+          ]),
+          el("tr", {}, [
+            el("th", {}, [
+              el("p", {
+                innerText: "Deathlink?",
+                class: "tiny explain",
+                title: "If deathlink is enabled, whenever you explode (or something else bad, up to you and your group), everyone else with deathlink dies too!\nOh, and if you recieve a deathlink, detonate your bomb!\nDon't forget to send deathlinks when you explode!"
+              })
+            ]),
+            el("td", {}, [
+              el("input", {
+                id: "deathlinkCheckbox",
+                class: "normalCheckbox",
+                type: "checkbox"
+              })
+            ])
+          ]),
+          el("tr", {}, [
+            el("th", {}, [
+              el("p", {
+                innerText: "Victory Requirement",
+                class: "tiny explain",
+                title: "The number of campaign bombs that need to be disarmed to be able to \"Goal\" your game.\nNote that if releasing is not automatically done for you, you may still need to complete more bombs than the number you set.\nThe default is the recommended amount for a smooth sync experience."
+              })
+            ]),
+            el("td", {}, [
+              el("input", {
+                id: "victoryReq",
+                type: "range",
+                class: "range",
+                max: campaign.length
+              })
+            ]),
+            el("td", {}, [
+              el("p", {
+                id: "victoryReqNum",
+                innerText: `${VICTORY_DEFAULT}/${campaign.length}`,
+                class: "small"
+              })
+            ])
+          ])
+        ])
+      );
+
+      campaignDiv.appendChild(
+        el("button", {
+          innerText: "Download YAML",
+          _click: () => {
+            let slotName = getId("slotBox").value;
+            if (slotName.length == 0) { appStatus.textContent = "Slot name is empty."; return; }
+            if (slotName.match(/^\d+$/g)) { 
+              //If you know more about how this is supported by Manual or Archipelago, please do notify me of the source so this can be changed accordingly
+              if (!window.confirm("Slot names which are entirely numbers tend to cause problems. Would you like to continue anyway?")) { return; }
+            }
+            let apOptions = {
+              deathlink: getId("deathlinkCheckbox").checked,
+              progressionBalancing: getId("pbSlider").value,
+              victoryRequirement: getId("victoryReqNum").innerText,
+            };
+            let modCountsPreset = localStorage.getItem("Module counts present");
+            let ktaneOptions = {
+              profileName: localStorage.getItem("Profile filename"),
+              vanillas: localStorage.getItem("Vanilla enabled"),
+              modCounts: modCountsPreset != "None" ? modCountsPreset : localStorage.getItem("Module counts"),
+              mode: localStorage.getItem("Bomb mode").toLowerCase(),
+              ruleseed: localStorage.getItem("Rule seed enabled") ? (localStorage.getItem("Rule seed chaos") ? "chaos" : `on, seed = ${localStorage.getItem("Rule seed number")}`) : "off",
+              timeScale: localStorage.getItem("Time scale"),
+              strikes: localStorage.getItem("Strikes number"),
+              widgets: localStorage.getItem("Widgets number"),
+              pacingEvents: localStorage.getItem("Pacing events"),
+              frontFaceOnly: localStorage.getItem("Front face only"),
+              edgeworkHud: localStorage.getItem("Edgework HUD"),
+              bombHud: localStorage.getItem("Bomb HUD").toLowerCase(),
+              room: localStorage.getItem("Room"),
+              generatorSeed: localStorage.getItem("Seed value"),
+              checkInfo: calculateCheckCounts()
+            };
+            downloadYAML(slotName, apOptions, ktaneOptions, campaignHash, CUSTOM_CAMPAIGN_VERSION);
+            localStorage.setItem("Downloaded YAML", true);
+          }
+        })
+      );
+
+      campaignDiv.appendChild(
+        el("button", {
+          innerText: "Download apworld",
+          style: "margin-left: 6px;",
+          _click: () => {
+            let apOptions = {
+              deathlink: getId("deathlinkCheckbox").checked,
+              victoryValue: Number.parseInt(getId("victoryReq").value)
+            };
+            let namedCampaign = [];
+            campaign.forEach(bomb => {
+              let bombArr = [];
+              bomb.forEach(module => { bombArr.push(moduleIdToName(module)); });
+              namedCampaign.push(bombArr);
+            });
+            downloadApworld(apOptions, namedCampaign, campaignHash);
+          }
+        })
+      );
+
+      campaignDiv.appendChild(
+        el("div", {}, [
+          el("button", {
+            innerText: "Download DMG Missions",
+            class: "big",
+            _click: () => { downloadDMGFiles(campaignHash); }
+          })
+        ])
+      );
+
+      getId("pbSlider").addEventListener("input", () => { getId("pbNum").innerText = getId("pbSlider").value; });
+      getId("victoryReq").value = VICTORY_DEFAULT;
+      getId("victoryReq").addEventListener("input", () => { getId("victoryReqNum").innerText = `${getId("victoryReq").value}/${campaign.length}`; });
     }
 
-    function moduleIdToName(modId) { return ktaneModules.find((entry) => entry[0] == modId)[1]; }
+    function calculateCheckCounts() {
+      let incoming = new Set(campaign.flat()).size - new Set(campaign[0]).size;
+      let outgoing = campaign.length + freeplay.length + sum(campaign.map(b => b.length)) + sum(freeplay.map(b => b.length));
+      let bestPossibleIncoming = campaign.flat().length - campaign[0].length;
+
+      return `${incoming} incoming checks, ${outgoing} outgoing checks, ${((incoming / bestPossibleIncoming) * 100).toFixed(1)}% efficiency`;
+    }
+
+    function moduleIdToName(modId) { return ktaneModules.find(entry => entry.id == modId).name; }
 
     function RNG(x) { return Math.floor(Math.random() * x); }
 
@@ -555,7 +914,7 @@
     function nameBomb(partOfCamp, index) {
       return partOfCamp ? `Bomb ${natoExcel(index+1)}` : `Freeplay #${index+1}`;
     }
-    
+
     function natoExcel(n) {
       let letters = [];
 
@@ -570,5 +929,31 @@
     }
 
     function sum(arr) { return arr.reduce((a, c) => a + c, 0); }
+
+    function getId(id) { return document.getElementById(id); }
+
+    function noFalse(cond, str) { return cond ? str : ""; };
+
+    function el(tag, op = {}, ch = []) {
+      let element = document.createElement(tag);
+
+      for (let [k, v] of Object.entries(op)) {
+        if (k == "class") {
+          element.classList.add(...v.split(" "));
+        } else if (k.startsWith("_")) {
+          element.addEventListener(k.slice(1), v);
+        } else if (k in element) {
+          element[k] = v;
+        } else {
+          element.setAttribute(k, v);
+        }
+      }
+
+      ch.forEach(child => {
+        element.appendChild(child);
+      });
+
+      return element;
+    }
   </script>
 </html>
