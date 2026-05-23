@@ -78,13 +78,13 @@
     <button id="generateCampaign" class="big">Generate Campaign</button>
     <div id="campaign"></div>
     <div class="apCheck"> <p>Archipelago Mode</p> <input onclick="apToggle()" type="checkbox" class="bigCheckbox" id="apCheckbox" style="margin-left: 6em;"></div>
-    <a id="infoDoc" class="tiny infoDoc" href="https://blananas2.github.io/ktane-CustomCampaign/">Information Page</a>
+    <a id="infoDoc" class="tiny infoDoc" href="https://github.com/Blananas2/ktane-CustomCampaign/blob/main/README.md">Information Page</a>
     <a id="version" class="tiny version" href="https://github.com/Blananas2/ktane-CustomCampaign/commits/main/">version name-0</a>
   </body>
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src='apfilegen.js'></script>
   <script>
-    const CUSTOM_CAMPAIGN_VERSION = "alfa-9.1";
+    const CUSTOM_CAMPAIGN_VERSION = "alfa-9.2";
 
     const rpsDiv = getId("restorePreviousSession");
     const apCheckbox = getId("apCheckbox");
@@ -276,6 +276,7 @@
 
     function retrieveLocalStorage() {
       apMode = localStorage.getItem("Archipelago mode") == "true";
+      jsonValidated = true;
       profileModules = JSON.parse(localStorage.getItem("Profile-enabled modules"));
       vanillaCheckbox.checked = localStorage.getItem("Vanilla enabled") == "true";
       modCountField.value = localStorage.getItem("Module counts");

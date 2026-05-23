@@ -63,13 +63,14 @@ At this time, the world functions as follows:
 - In KTANE, click on the Mod Selector, then Dynamic Mission Generator. Your missions are run through here.
 - For each mission you play, *assuming its checks are shown in green in the Manual Client*:
   - Click the "Missions" button, then the mission's name in the list, then the Run button. The mission will start soon after, so be ready!
-  - After a defusal or detonation, open the dropdown for the relevant mission in the Manual client, and click any modules that were defused. If you don't remember which were defused, you can access the logfile to find out. Easiest method is via the [Log Viewer Hotkey](https://steamcommunity.com/sharedfiles/filedetails/?id=1358839759), where you simply need to press Shift+F7. Don't forget to send a deathlink as well if the bomb exploded.
-- After **all** bombs are defused, after sending all other checks, open the "Victory" dropdown, and click the "All Bombs Defused" button.
+  - After a defusal or detonation, open the dropdown for the relevant mission in the Manual client, and click any modules that were defused. If you don't remember which were defused, you can access the logfile to find out. Easiest method is to pull up the logfile, see [Additional Mod Information](#additional-mod-information) for more details. Don't forget to send a deathlink as well if the bomb exploded.
+- After enough bombs are defused, after sending all other checks, open the "Victory" dropdown, and click the "Bomb Quota Reached" button.
 
 # Additional Mod Information
 
 - [Krow's Intro Missions](https://steamcommunity.com/sharedfiles/filedetails/?id=2211683331) are highly recommended for new players. Linked is a convenient collection so you can subscribe to all the mods necessary in one click. The included mission pack is similar to that of the vanilla campaign.
 - [Camera Zoom](https://steamcommunity.com/sharedfiles/filedetails/?id=838110334) _(included in Krow's)_ allows zooming in and out using the scroll wheel.
+- Being able to view the logfile is something new players definitely need to know, as many modules include various information on what it's calculating under the hood, so you can know precisely what went wrong should you make a mistake but don't know what exactly it is. [Log Viewer Hotkey](https://steamcommunity.com/sharedfiles/filedetails/?id=1358839759) makes this as simple as a keyboard shortcut, Shift+F7, which'll then show that logfile in your browser.
 - [Rule Seed Modifier](https://steamcommunity.com/sharedfiles/filedetails/?id=2037350348) modifies the specifics of the rules and data in the manual pages. Required if "Rule Seed" options are enabled. Experts must ensure the Rule seed number, configurable at the [Repository of Manual Pages](https://ktane.timwi.de/), matches that of the number present on the bomb.
 - [Tweaks](https://steamcommunity.com/sharedfiles/filedetails/?id=1366808675) _(included in Krow's)_ is our Quality of Life mod that also adds new features.
 - You can sift through the various gameplay room options [here](https://steamcommunity.com/workshop/browse/?appid=341800&requiredtags[]=Gameplay+Room).
