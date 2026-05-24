@@ -84,7 +84,7 @@
   <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
   <script src='apfilegen.js'></script>
   <script>
-    const CUSTOM_CAMPAIGN_VERSION = "alfa-9.2";
+    const CUSTOM_CAMPAIGN_VERSION = "alfa-9.3";
 
     const rpsDiv = getId("restorePreviousSession");
     const apCheckbox = getId("apCheckbox");
@@ -578,7 +578,7 @@
         let dmgString = `////${nameBomb(true, ix)}\n`;
         dmgString += setupLine(bomb.length);
         dmgString += middleBit;
-        dmgString += nameOrder(bomb).join("\n");
+        dmgString += dmgQuote(nameOrder(bomb)).join("\n");
         dmgStrings[0].push(dmgString);
       });
       if (freeplay != undefined) {
@@ -595,7 +595,7 @@
                         ].join('\n');
           dmgString += setupLine(bomb.length);
           dmgString += middleBit;
-          dmgString += idsNameSorted.join("\n");
+          dmgString += dmgQuote(idsNameSorted).join("\n");
           dmgStrings[1].push(dmgString);
         });
       }
@@ -608,6 +608,7 @@
       }
       function nameOrder(barr) { return [...barr].sort((x, y) => moduleIdToName(x).localeCompare(moduleIdToName(y))); }
       function spaceSeparate(arr) { return arr.filter(s => s !== "").join(" "); }
+      function dmgQuote(ids) { return ids.map(s => s.includes(' ') ? `"${s}"` : s); }
     }
 
     function visualizeCampaign(restored) {
